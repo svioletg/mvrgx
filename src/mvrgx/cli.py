@@ -45,12 +45,15 @@ def run_cli() -> int | None:
         + ' without making any changes.')
     parser.add_argument('-r', '--recursive', action='store_true',
         help='Searches this directory recursively. Default behavior is to only search the top level.')
+    parser.add_argument('-p', '--preview', action='store_true',
+        help='Displays the captured files and what their new names would be, and exits without modifying any files.')
 
     args = parser.parse_args()
     find_regex  : re.Pattern = args.regex
     root        : Path       = args.at_dir
     out_pattern : None | str = args.out
     recurs      : bool       = args.recursive
+    preview     : bool       = args.preview
 
     if not root.is_dir():
         logger.error(f'Not a directory or doesn\'t exist: {root}')
@@ -84,6 +87,9 @@ def run_cli() -> int | None:
             print(f'{Fore.BLUE}{k}{Style.RESET_ALL}'
                   + f'{preview_sep:>{max(len(str(i)) for i in move_map) + len(preview_sep) - len(str(k))}}'
                   + f'{Fore.GREEN}{v}')
+
+    if preview:
+        return
 
     q = input(f'\nAbout to replace {len(move_map)} files. Continue? (y/n) ').strip().lower()
     if q != 'y':

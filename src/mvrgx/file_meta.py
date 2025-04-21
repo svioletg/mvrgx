@@ -8,6 +8,20 @@ from mutagen import flac, mp3
 class FileMeta:
     def __init__(self, fp: str | Path):
         self.stat = Path(fp).stat()
+        self.path = Path(fp).absolute()
+
+        self.name: str = self.path.name.removesuffix(self.path.suffix)
+        self.suffix: str = self.path.suffix.strip('.')
+        self.bytes: int = self.stat.st_size
+        self.kb: float = round(self.bytes / 1000, 4)
+        self.mb: float = round(self.kb / 1000, 4)
+        self.gb: float = round(self.mb / 1000, 4)
+        self.ctime: float = self.stat.st_ctime
+        self.atime: float = self.stat.st_atime
+        self.mtime: float = self.stat.st_mtime
+
+    def __repr__(self) -> str:
+        ... # TODO
 
 class AudioMeta:
     INFO_CLS: dict[str, Callable[[str], mutagen.FileType]] = { # type: ignore

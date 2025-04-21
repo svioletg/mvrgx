@@ -17,7 +17,7 @@ def parse_meta_key(fp: str | Path, s: str) -> str:
             info = AudioMeta(fp)
         case _:
             raise ValueError(f'Unrecognized metadata category: {mode}')
-    return getattr(info, key)
+    return str(getattr(info, key))
 
 def parse_output_pattern(out_pat: str, fp_match: re.Match[str]) -> str:
     repl_groups_num: set[str] = set(re.findall(r"\\\d", out_pat))
