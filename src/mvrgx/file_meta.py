@@ -10,7 +10,8 @@ class FileMeta:
         self.stat = Path(fp).stat()
         self.path = Path(fp).absolute()
 
-        self.name: str = self.path.name.removesuffix(self.path.suffix)
+        self.name: str = self.path.name
+        self.stem: str = self.path.stem
         self.suffix: str = self.path.suffix.strip('.')
         self.bytes: int = self.stat.st_size
         self.kb: float = round(self.bytes / 1000, 4)
@@ -21,7 +22,7 @@ class FileMeta:
         self.mtime: float = self.stat.st_mtime
 
     def __repr__(self) -> str:
-        ... # TODO
+        return f'FileMeta(path={self.path}, bytes={self.bytes})'
 
 class AudioMeta:
     INFO_CLS: dict[str, Callable[[str], mutagen.FileType]] = { # type: ignore

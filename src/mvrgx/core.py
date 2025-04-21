@@ -1,10 +1,11 @@
 import re
+from datetime import datetime
 from pathlib import Path
 
 from mvrgx.file_meta import AudioMeta, FileMeta
 from mvrgx.logging import logger
 
-META_KEY_RGX: re.Pattern = re.compile(r"(\\m:([aA-zZ])\{(\S+?)\})")
+META_KEY_RGX: re.Pattern = re.compile(r"(\\m:([aA-zZ])\{(.+?)\})")
 
 def parse_meta_key(fp: str | Path, s: str) -> str:
     if (m := META_KEY_RGX.search(s)) is None:
@@ -25,6 +26,8 @@ def parse_formatter(s: str, fmt: str | None) -> str:
     if fmt is None:
         return s
     match fmt[0]:
+        case 't':
+            return datetime.fromtimestamp(float(s)).strftime(''.join(fmt[1:]))
         case 'z':
             return s.zfill(int(''.join(fmt[1:])))
         case _:
