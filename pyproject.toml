@@ -1,6 +1,6 @@
 [project]
 name = "mvrgx"
-version = "0.4.1"
+version = "0.5.0"
 description = "Moves/renames files based on an input and output regex pattern."
 readme = "README.md"
 requires-python = ">=3.12"

@@ -10,6 +10,8 @@ def parse_meta_key(fp: str | Path, s: str) -> str:
     if (m := META_KEY_RGX.search(s)) is None:
         raise ValueError(f'Invalid metadata key format: {s!r}')
     _, mode, key = map(str, m.groups(0))
+    key, *fmt = key.split(':')
+    fmt = fmt[0] if fmt else None
     match mode:
         case 'f':
             info = FileMeta(fp)
@@ -17,7 +19,16 @@ def parse_meta_key(fp: str | Path, s: str) -> str:
             info = AudioMeta(fp)
         case _:
             raise ValueError(f'Unrecognized metadata category: {mode}')
-    return str(getattr(info, key))
+    return parse_formatter(str(getattr(info, key)), fmt)
+
+def parse_formatter(s: str, fmt: str | None) -> str:
+    if fmt is None:
+        return s
+    match fmt[0]:
+        case 'z':
+            return s.zfill(int(''.join(fmt[1:])))
+        case _:
+            raise ValueError(f'Unrecognized format char: {fmt[0]} (in: {fmt!r})')
 
 def parse_output_pattern(out_pat: str, fp_match: re.Match[str]) -> str:
     repl_groups_num: set[str] = set(re.findall(r"\\\d", out_pat))
