@@ -15,6 +15,9 @@ from mvrgx.logging import enable_logging, logger
 
 colorama.init(autoreset=True)
 
+COLOR_PATH_OLD: str = Style.BRIGHT + Fore.BLUE
+COLOR_PATH_NEW: str = Fore.GREEN
+
 def show_out_pattern_help():
     help_text: str = """
 The output pattern accepts either numbered groups (\\0, \\1, \\2) or metadata-key groups (\\m{title}, \\m{artist}).
@@ -79,14 +82,14 @@ def run_cli() -> int | None:
     max_preview_ln: int = max(sum(map(lambda i: len(str(i)), pair)) + len(preview_sep) for pair in move_map.items())
     if max_preview_ln > os.get_terminal_size().columns:
         for k, v in move_map.items():
-            print(f'{Fore.BLUE}- {k}')
-            print(f'{Fore.GREEN}+ {v}')
-            # print(f'{Fore.GREEN}+ {('[...] ' + v.parts[-1]) if k.parts[:-1] == v.parts[:-1] else v}')
+            print(f'{COLOR_PATH_OLD}- {k}')
+            print(f'{COLOR_PATH_NEW}+ {v}')
+            # print(f'{COLOR_PATH_NEW}+ {('[...] ' + v.parts[-1]) if k.parts[:-1] == v.parts[:-1] else v}')
     else:
         for k, v in move_map.items():
-            print(f'{Fore.BLUE}{k}{Style.RESET_ALL}'
+            print(f'{COLOR_PATH_OLD}{k}{Style.RESET_ALL}'
                   + f'{preview_sep:>{max(len(str(i)) for i in move_map) + len(preview_sep) - len(str(k))}}'
-                  + f'{Fore.GREEN}{v}')
+                  + f'{COLOR_PATH_NEW}{v}')
 
     if preview:
         return

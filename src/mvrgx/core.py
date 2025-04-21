@@ -4,7 +4,7 @@ from pathlib import Path
 from mvrgx.file_meta import AudioMeta, FileMeta
 from mvrgx.logging import logger
 
-META_KEY_RGX: re.Pattern = re.compile(r"(\\m:([aA-zZ])\{(\S+)\})")
+META_KEY_RGX: re.Pattern = re.compile(r"(\\m:([aA-zZ])\{(\S+?)\})")
 
 def parse_meta_key(fp: str | Path, s: str) -> str:
     if (m := META_KEY_RGX.search(s)) is None:
