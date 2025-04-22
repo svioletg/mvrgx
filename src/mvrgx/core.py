@@ -39,9 +39,6 @@ def parse_output_pattern(out_pat: str, fp_match: re.Match[str]) -> str:
     if len(repl_groups_num.union(repl_groups_meta)) == 0:
         logger.warning('Output pattern contains no valid groups')
 
-    # pprint(repl_groups_num)
-    # pprint(repl_groups_meta)
-
     orig_fp = Path(fp_match.string)
     new_str: str = out_pat
     for g in repl_groups_num:

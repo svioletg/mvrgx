@@ -1,6 +1,6 @@
 [project]
 name = "mvrgx"
-version = "0.6.0"
+version = "0.8.0"
 description = "Moves/renames files based on an input and output regex pattern."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -15,3 +15,4 @@ dependencies = [
 [project.scripts]
 mvrgx = "mvrgx.cli:run_cli"
 mvr = "mvrgx.cli:run_cli"
+mvrgui = "mvrgx.gui.gui:run_gui"

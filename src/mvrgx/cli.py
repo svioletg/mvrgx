@@ -15,12 +15,12 @@ from mvrgx.logging import enable_logging, logger
 
 colorama.init(autoreset=True)
 
-COLOR_PATH_OLD: str = Style.BRIGHT + Fore.BLUE
+COLOR_PATH_OLD: str = Style.NORMAL + Fore.CYAN
 COLOR_PATH_NEW: str = Fore.GREEN
 
 def show_out_pattern_help():
     help_text: str = """
-The output pattern accepts either numbered groups (\\0, \\1, \\2) or metadata-key groups (\\m{title}, \\m{artist}).
+The output pattern accepts either numbered groups (\\0, \\1, \\2) or metadata-key groups (\\m:a{trackno}, \\m:f{suffix}).
 Numbered groups will correspond to each group given for the input regex pattern, e.g. for the input pattern
 '^(\\d+) - (.+)', and the output pattern 'Track \\0. \\1', \\0 will be replaced with what is captured by (\\d+),
 and \\1 would be replaced with what is captured by (.+).
@@ -28,22 +28,25 @@ and \\1 would be replaced with what is captured by (.+).
 Metadata groups can be used to access file metadata in a similar replacement fashion. The syntax for a metadata
 group is \\m:X{Y}, where X is the metadata category, and Y is the key name.
 Supported metadata categories are: f (FILE / GENERAL), a (AUDIO).
+FILE metadata contains things like the original file name, file suffix (last extension, minus the leading dot),
+file size (in bytes, KB, MB, and GB), and so on. AUDIO metadata can be used for MP3 and FLAC files, and contains
+information like track title, number, album, and artist.
 """
-    print('\n'.join('\n'.join(textwrap.wrap(p)) for p in help_text.split('\n\n')))
+    print('\n\n'.join('    ' + '\n'.join(textwrap.wrap(p)).strip() for p in help_text.split('\n\n')))
 
 def run_cli() -> int | None:
-    enable_logging(logger, 'INFO')
-
     parser = ArgumentParser()
     parser.add_argument('regex', type=re.compile,
         help='Python-flavored regex pattern to match files against.' \
         + ' In bash, it is advised to give this pattern in single-quotes to avoid unexpected behavior.')
+    parser.add_argument('-log', type=str, choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRTIICAL'), default='INFO',
+        help='Set the logging level.')
     parser.add_argument('-at', '--at-dir', type=Path, default=Path('.'),
         help='An alternative path to run this search/replace in. Defaults to the current directory.')
     parser.add_argument('-o', '--out', type=str,
         help='Pattern to move/rename each file to.'
         + ' Use "\\N" to insert a capture group, where N is the index of the group.'
-        + ' You can also access file metadata with the "\\m{...}" pattern. Use -o/--out :HELP for details.'
+        + ' You can also access file metadata with the "\\m{...}" pattern. Use -o/--out :help for details.'
         + ' Omitting this option will instead print out files captured with the find pattern given,'
         + ' without making any changes.')
     parser.add_argument('-r', '--recursive', action='store_true',
@@ -53,15 +56,22 @@ def run_cli() -> int | None:
 
     args = parser.parse_args()
     find_regex  : re.Pattern = args.regex
+    log_level   : str        = args.log
     root        : Path       = args.at_dir
     out_pattern : None | str = args.out
     recurs      : bool       = args.recursive
     preview     : bool       = args.preview
 
+    enable_logging(logger, log_level.upper())
+
+    if out_pattern and (out_pattern.lower() == ':help'):
+        show_out_pattern_help()
+        return
+
     if not root.is_dir():
         logger.error(f'Not a directory or doesn\'t exist: {root}')
 
-    full_glob: list[Path] = [f for f in (root.rglob('*') if recurs else root.glob('*')) if f.is_file()]
+    full_glob: list[Path] = [f for f in (root.rglob('*') if recurs else root.glob('*'))]
     matched: list[re.Match[str]] = [m for f in full_glob if (m := find_regex.search(str(f)))]
 
     if len(matched) == 0:
@@ -78,7 +88,7 @@ def run_cli() -> int | None:
         orig_fp = Path(fp_match.string)
         move_map[orig_fp] = Path(*orig_fp.parts[:-1], parse_output_pattern(out_pattern, fp_match))
 
-    preview_sep: str = ' -> '
+    preview_sep: str = '  ->  '
     max_preview_ln: int = max(sum(map(lambda i: len(str(i)), pair)) + len(preview_sep) for pair in move_map.items())
     if max_preview_ln > os.get_terminal_size().columns:
         for k, v in move_map.items():
@@ -94,7 +104,11 @@ def run_cli() -> int | None:
     if preview:
         return
 
-    q = input(f'\nAbout to replace {len(move_map)} files. Continue? (y/n) ').strip().lower()
+    print() # newline
+    if (dupes := len(move_map.values()) - len(set(move_map.values()))) > 0:
+        logger.warning(f'Output has {dupes} duplicate filenames;'
+                       + ' if you continue, these files may be overwritten and lost')
+    q = input(f'About to replace {len(move_map)} files. Continue? (y/n) ').strip().lower()
     if q != 'y':
         print('Aborting.')
         return
