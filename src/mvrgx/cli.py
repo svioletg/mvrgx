@@ -40,9 +40,9 @@ def run_cli() -> int | None:
         help='Python-flavored regex pattern to match files against.' \
         + ' In bash, it is advised to give this pattern in single-quotes to avoid unexpected behavior.')
     parser.add_argument('-log', type=str, choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRTIICAL'), default='INFO',
-        help='Set the logging level.')
+        help='Sets the logging level.')
     parser.add_argument('-at', '--at-dir', type=Path, default=Path('.'),
-        help='An alternative path to run this search/replace in. Defaults to the current directory.')
+        help='Alternative path to run this search/replace in. Defaults to the current directory.')
     parser.add_argument('-o', '--out', type=str,
         help='Pattern to move/rename each file to.'
         + ' Use "\\N" to insert a capture group, where N is the index of the group.'
@@ -71,7 +71,7 @@ def run_cli() -> int | None:
     if not root.is_dir():
         logger.error(f'Not a directory or doesn\'t exist: {root}')
 
-    full_glob: list[Path] = [f for f in (root.rglob('*') if recurs else root.glob('*'))]
+    full_glob: list[Path] = list((root.rglob('*') if recurs else root.glob('*')))
     matched: list[re.Match[str]] = [m for f in full_glob if (m := find_regex.search(str(f)))]
 
     if len(matched) == 0:
@@ -86,7 +86,7 @@ def run_cli() -> int | None:
     move_map: dict[Path, Path] = {}
     for fp_match in matched:
         orig_fp = Path(fp_match.string)
-        move_map[orig_fp] = Path(*orig_fp.parts[:-1], parse_output_pattern(out_pattern, fp_match))
+        move_map[orig_fp] = Path(*orig_fp.parts[:-1], parse_output_pattern(out_pattern, fp_match, orig_fp))
 
     preview_sep: str = '  ->  '
     max_preview_ln: int = max(sum(map(lambda i: len(str(i)), pair)) + len(preview_sep) for pair in move_map.items())

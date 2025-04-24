@@ -1,0 +1,32 @@
+:root {
+    --light-main-bg: lightgrey;
+    --light-inner-bg: white;
+    --light-txt-color: black;
+    --light-item-selected-bg: #333;
+    --light-item-selected-txt-color: white;
+    --light-item-selected-border: 1px solid grey;
+}
+
+QWidget {
+    background-color: var(--light-main-bg);
+    color: var(--light-txt-color);
+}
+
+QLineEdit, QListWidget, QCheckBox::indicator {
+    background-color: var(--light-inner-bg);
+}
+
+QCheckBox::indicator {
+    width: 12px;
+    height: 12px;
+}
+
+QCheckBox::indicator:checked {
+    image: url('src/mvrgx/gui/asset/img/checkmark.svg');
+}
+
+QListWidget::item:selected {
+    background-color: var(--light-item-selected-bg);
+    color: var(--light-item-selected-txt-color);
+    border: var(--light-item-selected-border);
+}

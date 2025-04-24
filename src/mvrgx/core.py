@@ -8,6 +8,7 @@ from mvrgx.logging import logger
 META_KEY_RGX: re.Pattern = re.compile(r"(\\m:([aA-zZ])\{(.+?)\})")
 
 def parse_meta_key(fp: str | Path, s: str) -> str:
+    fp = Path(fp)
     if (m := META_KEY_RGX.search(s)) is None:
         raise ValueError(f'Invalid metadata key format: {s!r}')
     _, mode, key = map(str, m.groups(0))
@@ -17,6 +18,8 @@ def parse_meta_key(fp: str | Path, s: str) -> str:
         case 'f':
             info = FileMeta(fp)
         case 'a':
+            if fp.suffix.strip('.') not in AudioMeta.INFO_CLS:
+                return s
             info = AudioMeta(fp)
         case _:
             raise ValueError(f'Unrecognized metadata category: {mode}')
@@ -33,19 +36,19 @@ def parse_formatter(s: str, fmt: str | None) -> str:
         case _:
             raise ValueError(f'Unrecognized format char: {fmt[0]} (in: {fmt!r})')
 
-def parse_output_pattern(out_pat: str, fp_match: re.Match[str]) -> str:
+def parse_output_pattern(out_pat: str, str_match: re.Match[str], full_path: Path) -> str:
     repl_groups_num: set[str] = set(re.findall(r"\\\d", out_pat))
     repl_groups_meta: set[re.Match[str]] = set(META_KEY_RGX.finditer(out_pat))
     if len(repl_groups_num.union(repl_groups_meta)) == 0:
-        logger.warning('Output pattern contains no valid groups')
+        logger.warning(f'Output pattern contains no valid groups: {out_pat!r}')
 
-    orig_fp = Path(fp_match.string)
     new_str: str = out_pat
     for g in repl_groups_num:
         n: int = int(g.strip('\\'))
-        new_str = new_str.replace(g, str(fp_match.groups(0)[n]))
+        new_str = new_str.replace(g, str(str_match.groups(0)[n]))
+
     for g in repl_groups_meta:
         meta_key = str(g.groups(0)[0])
-        new_str = new_str.replace(meta_key, parse_meta_key(orig_fp, meta_key))
+        new_str = new_str.replace(meta_key, parse_meta_key(full_path, meta_key))
 
     return new_str
