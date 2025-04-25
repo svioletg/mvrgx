@@ -27,6 +27,7 @@ class Ui_DialogOK(object):
         self.labelMessage.setObjectName(u"labelMessage")
         self.labelMessage.setGeometry(QRect(20, 20, 351, 110))
         self.labelMessage.setAlignment(Qt.AlignCenter)
+        self.labelMessage.setWordWrap(True)
         self.pushButtonOK = QPushButton(DialogOK)
         self.pushButtonOK.setObjectName(u"pushButtonOK")
         self.pushButtonOK.setGeometry(QRect(150, 150, 100, 30))
