@@ -5,7 +5,7 @@ from loguru import logger
 
 logger.remove()
 
-def enable_logging(target_logger: 'loguru.Logger', stdout_level: str='INFO') -> int:
+def enable_logging(target_logger: 'loguru.Logger', stdout_level: str = 'INFO') -> int:
     """Adds handlers (after clearing previous ones) to the given `loguru` logger and returns their `int` identifiers.
 
     :param target_logger: `loguru.Logger` to add handles to.

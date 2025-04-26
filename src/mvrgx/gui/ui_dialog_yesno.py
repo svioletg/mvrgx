@@ -22,16 +22,16 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(400, 200)
+        Dialog.resize(400, 150)
         self.buttonBoxYN = QDialogButtonBox(Dialog)
         self.buttonBoxYN.setObjectName(u"buttonBoxYN")
-        self.buttonBoxYN.setGeometry(QRect(20, 140, 350, 32))
+        self.buttonBoxYN.setGeometry(QRect(20, 100, 350, 32))
         self.buttonBoxYN.setOrientation(Qt.Horizontal)
         self.buttonBoxYN.setStandardButtons(QDialogButtonBox.No|QDialogButtonBox.Yes)
         self.buttonBoxYN.setCenterButtons(True)
         self.labelMessage = QLabel(Dialog)
         self.labelMessage.setObjectName(u"labelMessage")
-        self.labelMessage.setGeometry(QRect(20, 20, 350, 110))
+        self.labelMessage.setGeometry(QRect(20, 20, 350, 70))
         self.labelMessage.setAlignment(Qt.AlignCenter)
         self.labelMessage.setWordWrap(True)
 

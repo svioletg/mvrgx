@@ -5,6 +5,7 @@ from pathlib import Path
 from mvrgx.file_meta import AudioMeta, FileMeta
 from mvrgx.logging import logger
 
+NUM_GROUP_RGX: re.Pattern = re.compile(r"(\\\d+)")
 META_KEY_RGX: re.Pattern = re.compile(r"(\\m:([aA-zZ])\{(.+?)\})")
 
 def parse_meta_key(fp: str | Path, s: str) -> str:
@@ -36,11 +37,12 @@ def parse_formatter(s: str, fmt: str | None) -> str:
         case _:
             raise ValueError(f'Unrecognized format char: {fmt[0]} (in: {fmt!r})')
 
-def parse_output_pattern(out_pat: str, str_match: re.Match[str], full_path: Path) -> str:
-    repl_groups_num: set[str] = set(re.findall(r"\\\d", out_pat))
+def parse_output_pattern(out_pat: str, str_match: re.Match[str], full_path: Path, *, warn_no_group: bool = True) -> str:
+    repl_groups_num: set[str] = set(NUM_GROUP_RGX.findall(out_pat))
     repl_groups_meta: set[re.Match[str]] = set(META_KEY_RGX.finditer(out_pat))
     if len(repl_groups_num.union(repl_groups_meta)) == 0:
-        logger.warning(f'Output pattern contains no valid groups: {out_pat!r}')
+        if warn_no_group:
+            logger.warning(f'Output pattern contains no valid groups: {out_pat!r}')
 
     new_str: str = out_pat
     for g in repl_groups_num:

@@ -1,19 +1,27 @@
 :root {
     --light-main-bg: lightgrey;
     --light-inner-bg: white;
-    --light-txt-color: black;
+    --light-bttn-bg: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 white, stop: 1 lightgrey);
+    --light-bttn-hover-bg: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 lightgrey, stop: 1 #bbb);
+    --light-bttn-pressed-bg: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 grey, stop: 1 grey);
+    --light-bttn-disabled-bg: rgba(0, 0, 0, 0);
     --light-item-selected-bg: #333;
-    --light-item-selected-txt-color: white;
+
+    --light-bttn-border: 1px solid grey;
     --light-item-selected-border: 1px solid grey;
+
+    --light-txt-color: black;
+    --light-bttn-disabled-txt-color: rgba(0, 0, 0, 0.5);
+    --light-item-selected-txt-color: white;
 }
 
 QWidget {
-    background-color: var(--light-main-bg);
+    background: var(--light-main-bg);
     color: var(--light-txt-color);
 }
 
 QLineEdit, QListWidget, QCheckBox::indicator {
-    background-color: var(--light-inner-bg);
+    background: var(--light-inner-bg);
 }
 
 QCheckBox::indicator {
@@ -26,7 +34,27 @@ QCheckBox::indicator:checked {
 }
 
 QListWidget::item:selected {
-    background-color: var(--light-item-selected-bg);
+    background: var(--light-item-selected-bg);
     color: var(--light-item-selected-txt-color);
     border: var(--light-item-selected-border);
+}
+
+QPushButton {
+    background: var(--light-bttn-bg);
+    color: var(--light-txt-color);
+    border: var(--light-bttn-border);
+    border-radius: 2px;
+}
+
+QPushButton:hover {
+    background: var(--light-bttn-hover-bg);
+}
+
+QPushButton:pressed {
+    background: var(--light-bttn-pressed-bg);
+}
+
+QPushButton:disabled {
+    background: var(--light-bttn-disabled-bg);
+    color: var(--light-bttn-disabled-txt-color);
 }

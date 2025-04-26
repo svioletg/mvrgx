@@ -4,18 +4,20 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QListWidgetItem, QMainWindow
 
-from mvrgx.core import parse_output_pattern
+from mvrgx.core import NUM_GROUP_RGX, parse_output_pattern
 from mvrgx.gui.ui_dialog_ok import Ui_DialogOK
 from mvrgx.gui.ui_main import Ui_MainWindow
 from mvrgx.logging import enable_logging, logger
 from mvrgx.project import PROJECT_ROOT, VERSION
+from mvrgx.util import glob_sep
 
 STYLE_PATH: Path = PROJECT_ROOT / 'gui/asset/qstyle.css'
 
-STYLE_VAR_RGX = re.compile(r"(--.+): (.+);")
+STYLE_VAR_DEF_RGX = re.compile(r"(--.+?): (.+);")
+STYLE_VAR_ACCESS_RGX = re.compile(r"var\((.+)\)")
 
 def parse_style_sheet(fp: str | Path) -> str:
-    style_raw: str = STYLE_PATH.read_text('utf-8')
+    style_raw: str = Path(fp).read_text('utf-8')
 
     if (m := re.search(r":root {(.*?)}", style_raw, flags=re.S)) is None:
         style_root_inner: str = ''
@@ -24,26 +26,32 @@ def parse_style_sheet(fp: str | Path) -> str:
         style_root_inner: str = str(m.groups(0)[0])
         style_sheet: str = style_raw[m.end(0):]
 
-    for k, v in STYLE_VAR_RGX.findall(style_root_inner):
-        style_sheet = style_sheet.replace(f'var({k})', v)
-    return style_sheet
+    style_vars: dict[str, str] = dict(STYLE_VAR_DEF_RGX.findall(style_root_inner))
 
-STYLE_SHEET: str = parse_style_sheet(STYLE_PATH)
+    def _get_var(m: re.Match[str]) -> str:
+        key: str = str(m.groups(0)[0])
+        if key not in style_vars:
+            logger.error(f'CSS var "{key}" is not defined in {Path(fp).relative_to(PROJECT_ROOT)}')
+            return ''
+        return style_vars[key]
+    return STYLE_VAR_ACCESS_RGX.sub(_get_var, style_sheet)
 
 class DialogOK(QDialog):
-    def __init__(self):
+    def __init__(self, style_sheet: str = ''):
         super().__init__()
         self.ui = Ui_DialogOK()
         self.ui.setupUi(self)
-        self.setStyleSheet(STYLE_SHEET)
+        self.style_sheet = style_sheet
+        self.setStyleSheet(style_sheet)
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, style_sheet: str = ''):
         logger.info('Initializing main UI...')
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setStyleSheet(STYLE_SHEET)
+        self.style_sheet = style_sheet
+        self.setStyleSheet(style_sheet)
         self.setWindowTitle(f'mvrgx v{VERSION}')
 
         # Signals
@@ -55,13 +63,15 @@ class MainWindow(QMainWindow):
         self.ui.lineEditSrcDir.textChanged.connect(self._verify_src_dir)
         self.ui.lineEditSrcDir.editingFinished.emit()
 
-        self.ui.labelSrcDirMissing.setVisible(False)
+        self.ui.labelSrcDirErrMsg.setVisible(False)
 
         self.ui.listWidgetSrcContents.itemDoubleClicked.connect(self._append_to_src_dir)
 
         self.ui.lineEditInputRegex.editingFinished.connect(self._update_mv_preview)
         self.ui.lineEditOutputPattern.textChanged.connect(self._verify_output_pattern)
         self.ui.lineEditOutputPattern.editingFinished.connect(self._update_mv_preview)
+
+        self.ui.pushButtonRenameFiles.clicked.connect(self._rename_files_clicked)
 
         logger.info('UI init complete')
 
@@ -82,10 +92,16 @@ class MainWindow(QMainWindow):
         return self.ui.checkBoxRecursive.isChecked()
 
     def _verify_src_dir(self):
-        self.ui.labelSrcDirMissing.setVisible(not Path(self.ui.lineEditSrcDir.text()).is_dir())
+        self.ui.labelSrcDirErrMsg.setVisible(not Path(self.ui.lineEditSrcDir.text()).is_dir())
 
     def _verify_output_pattern(self):
-        self.ui.labelOutputPatternMissing.setVisible(not self.output_pattern)
+        msg: str = ''
+        if not self.output_pattern:
+            msg = 'Cannot be empty.'
+        elif len(NUM_GROUP_RGX.findall(self.output_pattern)) == 0:
+            msg = 'Must contain at least one replacement group.'
+        self.ui.labelOutputPatternErrMsg.setText(msg)
+        self.ui.pushButtonRenameFiles.setEnabled(msg == '')
 
     def _ask_src_dir(self):
         dlg = QFileDialog(self, directory=str(self.src_dir if self.src_dir.is_dir() else '.'))
@@ -104,13 +120,7 @@ class MainWindow(QMainWindow):
             self.ui.labelSrcDirCount.setText('Directory empty.')
             return
 
-        contents_dirs: list[Path] = []
-        contents_files: list[Path] = []
-        for f in self.src_dir.glob('*'):
-            (contents_dirs if f.is_dir() else contents_files).append(f)
-
-        contents_dirs.sort()
-        contents_files.sort()
+        contents_dirs, contents_files = glob_sep(self.src_dir, '*', recurs=self.recurs_search, sort=True)
 
         contents: list[Path] = [Path('../')] + contents_dirs + contents_files
         if len(contents) - 1 == 0:
@@ -137,38 +147,50 @@ class MainWindow(QMainWindow):
         if not self.src_dir.is_dir():
             return
 
-        full_glob: list[Path] = list((self.src_dir.rglob('*') if self.recurs_search else self.src_dir.glob('*')))
-        matched: list[re.Match[str]] = [
-            m for f in full_glob \
+        contents_dirs, contents_files = glob_sep(self.src_dir, '*', recurs=self.recurs_search)
+
+        matched_dirs: list[re.Match[str]] = sorted([
+            m for f in contents_dirs \
             if (m := self.find_regex.search(str(f.relative_to(self.src_dir))))
-        ]
+        ], key=lambda i: i.string)
 
-        matched.sort(key=lambda i: i.string)
+        matched_files: list[re.Match[str]] = sorted([
+            m for f in contents_files \
+            if (m := self.find_regex.search(str(f.relative_to(self.src_dir))))
+        ], key=lambda i: i.string)
 
-        for m in matched:
+        for m in matched_dirs + matched_files:
             item = QListWidgetItem()
-            item.setText(m.string)
+            full_path: Path = self.src_dir / m.string
+            item.setText(m.string + ('/' if full_path.is_dir() else ''))
             self.ui.listWidgetMvBefore.addItem(item)
 
         if self.output_pattern:
-            for m in matched:
+            for m in matched_dirs + matched_files:
                 item = QListWidgetItem()
+                full_path: Path = self.src_dir / m.string
                 try:
-                    item.setText(parse_output_pattern(self.output_pattern, m, self.src_dir / m.string))
+                    parsed: str = parse_output_pattern(self.output_pattern, m, full_path, warn_no_group=False)
+                    item.setText(parsed + ('/' if full_path.is_dir() else ''))
                 except (AttributeError, IndexError, ValueError) as e:
-                    dlg = DialogOK()
+                    dlg = DialogOK(self.style_sheet)
                     dlg.setWindowTitle('Error parsing output pattern')
                     dlg.ui.labelMessage.setText(f'{e.__class__.__name__}: {e}')
                     dlg.exec()
                     break
                 self.ui.listWidgetMvAfter.addItem(item)
 
+    def _rename_files_clicked(self):
+        pass
+
 def run_gui() -> int | None:
     enable_logging(logger, 'INFO')
 
+    main_style: str = parse_style_sheet(STYLE_PATH)
+
     app = QApplication(sys.argv)
 
-    window = MainWindow()
+    window = MainWindow(main_style)
     window.show()
 
     logger.info('Executing...')

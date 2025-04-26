@@ -56,7 +56,7 @@
      </sizepolicy>
     </property>
    </widget>
-   <widget class="QLabel" name="labelSrcDirMissing">
+   <widget class="QLabel" name="labelSrcDirErrMsg">
     <property name="enabled">
      <bool>true</bool>
     </property>
@@ -144,11 +144,14 @@
      <string>Output pattern</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="pushButtonRenameFiles">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>550</y>
+      <y>540</y>
       <width>761</width>
       <height>40</height>
      </rect>
@@ -176,7 +179,7 @@
       <x>20</x>
       <y>290</y>
       <width>360</width>
-      <height>191</height>
+      <height>230</height>
      </rect>
     </property>
    </widget>
@@ -186,7 +189,7 @@
       <x>420</x>
       <y>289</y>
       <width>360</width>
-      <height>191</height>
+      <height>230</height>
      </rect>
     </property>
    </widget>
@@ -215,7 +218,7 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="labelOutputPatternMissing">
+   <widget class="QLabel" name="labelOutputPatternErrMsg">
     <property name="geometry">
      <rect>
       <x>420</x>

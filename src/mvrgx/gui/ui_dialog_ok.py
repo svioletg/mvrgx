@@ -22,15 +22,15 @@ class Ui_DialogOK(object):
     def setupUi(self, DialogOK):
         if not DialogOK.objectName():
             DialogOK.setObjectName(u"DialogOK")
-        DialogOK.resize(400, 200)
+        DialogOK.resize(400, 150)
         self.labelMessage = QLabel(DialogOK)
         self.labelMessage.setObjectName(u"labelMessage")
-        self.labelMessage.setGeometry(QRect(20, 20, 351, 110))
+        self.labelMessage.setGeometry(QRect(20, 20, 351, 70))
         self.labelMessage.setAlignment(Qt.AlignCenter)
         self.labelMessage.setWordWrap(True)
         self.pushButtonOK = QPushButton(DialogOK)
         self.pushButtonOK.setObjectName(u"pushButtonOK")
-        self.pushButtonOK.setGeometry(QRect(150, 150, 100, 30))
+        self.pushButtonOK.setGeometry(QRect(140, 100, 100, 30))
 
         self.retranslateUi(DialogOK)
         self.pushButtonOK.clicked.connect(DialogOK.accept)
