@@ -20,10 +20,10 @@ COLOR_PATH_NEW: str = Fore.GREEN
 
 def show_out_pattern_help():
     help_text: str = """
-The output pattern accepts either numbered groups (\\0, \\1, \\2) or metadata-key groups (\\m:a{trackno}, \\m:f{suffix}).
+The output pattern accepts either numbered groups (\\1, \\2, \\3) or metadata-key groups (\\m:a{trackno}, \\m:f{suffix}).
 Numbered groups will correspond to each group given for the input regex pattern, e.g. for the input pattern
-'^(\\d+) - (.+)', and the output pattern 'Track \\0. \\1', \\0 will be replaced with what is captured by (\\d+),
-and \\1 would be replaced with what is captured by (.+).
+'^(\\d+) - (.+)', and the output pattern 'Track \\1. \\2', \\1 will be replaced with what is captured by (\\d+),
+and \\2 would be replaced with what is captured by (.+).
 
 Metadata groups can be used to access file metadata in a similar replacement fashion. The syntax for a metadata
 group is \\m:X{Y}, where X is the metadata category, and Y is the key name.

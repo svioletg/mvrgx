@@ -1,5 +1,10 @@
 #!/bin/bash
 for i in src/mvrgx/gui/asset/*.ui; do
     name=$(echo $i | grep '/((?:.(?!/))+)\.ui$' -oP | rg '(\w+)\.ui' -or '$1' --color=never)
-    uv run pyside6-uic "${i}" -o "src/mvrgx/gui/ui_${name}.py"
+    uv run pyside6-uic "${i}" -o "src/mvrgx/gui/ui_${name}.py" --from-imports
+done
+
+for i in src/mvrgx/gui/asset/*.qrc; do
+    name=$(echo $i | grep '/((?:.(?!/))+)\.qrc$' -oP | rg '(\w+)\.qrc' -or '$1' --color=never)
+    uv run pyside6-rcc "${i}" -o "src/mvrgx/gui/${name}_rc.py"
 done

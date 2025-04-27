@@ -16,19 +16,23 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QDialog, QListWidget,
-    QListWidgetItem, QSizePolicy, QWidget)
+    QListWidgetItem, QProgressBar, QSizePolicy, QWidget)
 
 class Ui_DialogProcess(object):
     def setupUi(self, DialogProcess):
         if not DialogProcess.objectName():
             DialogProcess.setObjectName(u"DialogProcess")
-        DialogProcess.resize(400, 200)
+        DialogProcess.resize(400, 250)
         self.listWidgetStatus = QListWidget(DialogProcess)
         self.listWidgetStatus.setObjectName(u"listWidgetStatus")
-        self.listWidgetStatus.setGeometry(QRect(20, 40, 350, 130))
+        self.listWidgetStatus.setGeometry(QRect(20, 19, 350, 191))
         self.listWidgetStatus.setAlternatingRowColors(False)
         self.listWidgetStatus.setSelectionMode(QAbstractItemView.NoSelection)
         self.listWidgetStatus.setWordWrap(True)
+        self.progressBar = QProgressBar(DialogProcess)
+        self.progressBar.setObjectName(u"progressBar")
+        self.progressBar.setGeometry(QRect(20, 210, 350, 20))
+        self.progressBar.setValue(24)
 
         self.retranslateUi(DialogProcess)
 

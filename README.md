@@ -29,20 +29,20 @@ mvrgx '(.*)' -o '\m:f{ctime:t%Y-%m-%d} \0'
 mvrgx '*(\.mp3$)' -o '\m:a{trackno}-\m:a{title}.\m:f{suffix}'
 ```
 
-Regular expressions are expected for input patterns, while output patterns use a combination of plain text and special backslash-prefixed keys for inserting match groups (`\0`, `\1`, `\2`) or file metadata (`\m:f{suffix}`, `\m:a{trackno}`).
+Regular expressions are expected for input patterns, while output patterns use a combination of plain text and special backslash-prefixed keys for inserting match groups (`\1`, `\2`, `\3`) or file metadata (`\m:f{suffix}`, `\m:a{trackno}`).
 
 ## Usage: Capture groups
 
-Regex capture groups are numbered by their order of appearance, starting at 0. In the expression `((\d+) - (.+)\.(.+)$)`, there are 4 total groups. The first group (`\0`) is the set of parenthesis that surround the entire expression, capturing the full text. The second (`\1`) captures one or more digits, the third (`\2`) captures one or more of any character, the fourth and final (`\3`) group captures the string following the final dot in the text.
+Regex capture groups are numbered by their order of appearance, starting at 1. In the expression `((\d+) - (.+)\.(.+)$)`, there are 4 total groups. The first group (`\1`) is the set of parenthesis that surround the entire expression, capturing the full text. The second (`\2`) captures one or more digits, the third (`\3`) captures one or more of any character, the fourth and final (`\4`) group captures the string following the final dot in the text.
 
 To be more explicit, if this expression were matched against the string `04 - Libet's delay.mp3`, the groups would be as such:
 
 |Group|Content|
 |-|-|
-|`\0`|`04 - Libet's delay.mp3`|
-|`\1`|`04`|
-|`\2`|`Libet's delay`|
-|`\3`|`mp3`|
+|`\1`|`04 - Libet's delay.mp3`|
+|`\2`|`04`|
+|`\3`|`Libet's delay`|
+|`\4`|`mp3`|
 
 Also available for use, are **metadata** keys. They are used with the syntax `\m:X{Y:Z}`, where `X` is the metadata category/mode, `Y` is the key, and `Z` is an **optional** formatting specifier; if omitting the latter, the final colon is not needed. Some examples are `\m:f{suffix}`, `\m:a{trackno:z2}`, and `\m:f{stem}`.
 

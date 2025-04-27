@@ -13,8 +13,8 @@ from mvrgx.util import glob_sep
 
 STYLE_PATH: Path = PROJECT_ROOT / 'gui/asset/qstyle.css'
 
-STYLE_VAR_DEF_RGX = re.compile(r"(--.+?): (.+);")
-STYLE_VAR_ACCESS_RGX = re.compile(r"var\((.+)\)")
+STYLE_VAR_DEF_RGX: re.Pattern = re.compile(r"(--.+?): (.+);")
+STYLE_VAR_ACCESS_RGX: re.Pattern = re.compile(r"var\((.+)\)")
 
 def parse_style_sheet(fp: str | Path) -> str:
     style_raw: str = Path(fp).read_text('utf-8')
@@ -68,8 +68,11 @@ class MainWindow(QMainWindow):
         self.ui.listWidgetSrcContents.itemDoubleClicked.connect(self._append_to_src_dir)
 
         self.ui.lineEditInputRegex.editingFinished.connect(self._update_mv_preview)
+        self.ui.lineEditInputRegex.editingFinished.emit()
+
         self.ui.lineEditOutputPattern.textChanged.connect(self._verify_output_pattern)
         self.ui.lineEditOutputPattern.editingFinished.connect(self._update_mv_preview)
+        self.ui.lineEditOutputPattern.editingFinished.emit()
 
         self.ui.pushButtonRenameFiles.clicked.connect(self._rename_files_clicked)
 
@@ -80,7 +83,7 @@ class MainWindow(QMainWindow):
         return Path(self.ui.lineEditSrcDir.text()).resolve()
 
     @property
-    def find_regex(self) -> re.Pattern:
+    def input_regex(self) -> re.Pattern:
         return re.compile(self.ui.lineEditInputRegex.text())
 
     @property
@@ -96,12 +99,24 @@ class MainWindow(QMainWindow):
 
     def _verify_output_pattern(self):
         msg: str = ''
+        num_groups: list[int] = [*map(lambda i: int(i.strip('\\')), NUM_GROUP_RGX.findall(self.output_pattern))]
         if not self.output_pattern:
-            msg = 'Cannot be empty.'
-        elif len(NUM_GROUP_RGX.findall(self.output_pattern)) == 0:
-            msg = 'Must contain at least one replacement group.'
-        self.ui.labelOutputPatternErrMsg.setText(msg)
+            msg = 'Cannot be empty'
+        elif len(num_groups) == 0:
+            msg = 'Must contain at least one replacement group'
+        elif any(n < 1 for n in num_groups):
+            msg = 'Group index cannot be less than 1'
+        elif num_groups[-1] > self.input_regex.groups:
+            msg = 'Group index cannot be greater than the total number of groups' \
+                  + f' ({self.input_regex.groups})'
+        self.ui.labelOutputPatternWarning.setToolTip(msg)
+        self.ui.labelOutputPatternWarning.setVisible(msg != '')
         self.ui.pushButtonRenameFiles.setEnabled(msg == '')
+
+        if msg == '':
+            self.ui.lineEditOutputPattern.setStyleSheet("color: black;")
+        else:
+            self.ui.lineEditOutputPattern.setStyleSheet("color: red;")
 
     def _ask_src_dir(self):
         dlg = QFileDialog(self, directory=str(self.src_dir if self.src_dir.is_dir() else '.'))
@@ -151,12 +166,12 @@ class MainWindow(QMainWindow):
 
         matched_dirs: list[re.Match[str]] = sorted([
             m for f in contents_dirs \
-            if (m := self.find_regex.search(str(f.relative_to(self.src_dir))))
+            if (m := self.input_regex.search(str(f.relative_to(self.src_dir))))
         ], key=lambda i: i.string)
 
         matched_files: list[re.Match[str]] = sorted([
             m for f in contents_files \
-            if (m := self.find_regex.search(str(f.relative_to(self.src_dir))))
+            if (m := self.input_regex.search(str(f.relative_to(self.src_dir))))
         ], key=lambda i: i.string)
 
         for m in matched_dirs + matched_files:
@@ -165,14 +180,14 @@ class MainWindow(QMainWindow):
             item.setText(m.string + ('/' if full_path.is_dir() else ''))
             self.ui.listWidgetMvBefore.addItem(item)
 
-        if self.output_pattern:
+        if self.output_pattern and (self.ui.labelOutputPatternWarning.toolTip() == ''):
             for m in matched_dirs + matched_files:
                 item = QListWidgetItem()
                 full_path: Path = self.src_dir / m.string
                 try:
                     parsed: str = parse_output_pattern(self.output_pattern, m, full_path, warn_no_group=False)
                     item.setText(parsed + ('/' if full_path.is_dir() else ''))
-                except (AttributeError, IndexError, ValueError) as e:
+                except (AttributeError, ValueError) as e:
                     dlg = DialogOK(self.style_sheet)
                     dlg.setWindowTitle('Error parsing output pattern')
                     dlg.ui.labelMessage.setText(f'{e.__class__.__name__}: {e}')

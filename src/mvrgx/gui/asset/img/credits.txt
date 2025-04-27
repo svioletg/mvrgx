@@ -1,0 +1,2 @@
+checkmark.svg - https://www.svgrepo.com/svg/535263/checkmark
+warning.svg - https://www.svgrepo.com/svg/485943/warning
