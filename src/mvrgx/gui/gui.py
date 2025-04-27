@@ -1,11 +1,14 @@
 import re
 import sys
 from pathlib import Path
+from typing import Any, Self
 
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QListWidgetItem, QMainWindow
 
 from mvrgx.core import NUM_GROUP_RGX, parse_output_pattern
 from mvrgx.gui.ui_dialog_ok import Ui_DialogOK
+from mvrgx.gui.ui_dialog_task import Ui_DialogTask
+from mvrgx.gui.ui_dialog_yesno import Ui_DialogYN
 from mvrgx.gui.ui_main import Ui_MainWindow
 from mvrgx.logging import enable_logging, logger
 from mvrgx.project import PROJECT_ROOT, VERSION
@@ -13,8 +16,8 @@ from mvrgx.util import glob_sep
 
 STYLE_PATH: Path = PROJECT_ROOT / 'gui/asset/qstyle.css'
 
-STYLE_VAR_DEF_RGX: re.Pattern = re.compile(r"(--.+?): (.+);")
-STYLE_VAR_ACCESS_RGX: re.Pattern = re.compile(r"var\((.+)\)")
+STYLE_VAR_DEF_RGX: re.Pattern[str] = re.compile(r"(--.+?): (.+);")
+STYLE_VAR_ACCESS_RGX: re.Pattern[str] = re.compile(r"var\((.+)\)")
 
 def parse_style_sheet(fp: str | Path) -> str:
     style_raw: str = Path(fp).read_text('utf-8')
@@ -36,13 +39,33 @@ def parse_style_sheet(fp: str | Path) -> str:
         return style_vars[key]
     return STYLE_VAR_ACCESS_RGX.sub(_get_var, style_sheet)
 
-class DialogOK(QDialog):
-    def __init__(self, style_sheet: str = ''):
+class Dialog[T: Any](QDialog):
+    ui_type: type[T] = NotImplemented
+
+    def __init__(self, ui_type: type[T], style_sheet: str = ''):
         super().__init__()
-        self.ui = Ui_DialogOK()
+        self.ui: T = ui_type()
         self.ui.setupUi(self)
-        self.style_sheet = style_sheet
         self.setStyleSheet(style_sheet)
+        self.style_sheet = style_sheet
+
+    @classmethod
+    def spawn(cls, title: str, body: str, **cls_kwargs) -> tuple[Self, int]:
+        """
+        Spawn a dialog box with a given title and message (body), returning the instanced object and its exit code.
+        """
+        inst = cls(cls.ui_type, **cls_kwargs)
+        inst.setWindowTitle(title)
+        inst.ui.labelMessage.setText(body)
+        ret = inst.exec()
+        return inst, ret
+
+class DialogOK(Dialog):
+    ui_type = Ui_DialogOK
+class DialogYN(Dialog):
+    ui_type = Ui_DialogYN
+class DialogTask(Dialog):
+    ui_type = Ui_DialogTask
 
 class MainWindow(QMainWindow):
     def __init__(self, style_sheet: str = ''):
@@ -50,17 +73,17 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.style_sheet = style_sheet
         self.setStyleSheet(style_sheet)
+        self.style_sheet = style_sheet
         self.setWindowTitle(f'mvrgx v{VERSION}')
 
         # Signals
         logger.info('Connecting signals...')
         self.ui.pushButtonSrcBrowse.clicked.connect(self._ask_src_dir)
 
-        self.ui.lineEditSrcDir.setPlaceholderText(str(Path('.').resolve()))
+        self.ui.lineEditSrcDir.setText(str(Path('.').resolve()))
         self.ui.lineEditSrcDir.editingFinished.connect(self._update_src_dir_preview)
-        self.ui.lineEditSrcDir.textChanged.connect(self._verify_src_dir)
+        self.ui.lineEditSrcDir.textChanged.connect(self._validate_src_dir)
         self.ui.lineEditSrcDir.editingFinished.emit()
 
         self.ui.labelSrcDirErrMsg.setVisible(False)
@@ -70,7 +93,7 @@ class MainWindow(QMainWindow):
         self.ui.lineEditInputRegex.editingFinished.connect(self._update_mv_preview)
         self.ui.lineEditInputRegex.editingFinished.emit()
 
-        self.ui.lineEditOutputPattern.textChanged.connect(self._verify_output_pattern)
+        self.ui.lineEditOutputPattern.textChanged.connect(self._validate_output_pattern)
         self.ui.lineEditOutputPattern.editingFinished.connect(self._update_mv_preview)
         self.ui.lineEditOutputPattern.editingFinished.emit()
 
@@ -83,7 +106,7 @@ class MainWindow(QMainWindow):
         return Path(self.ui.lineEditSrcDir.text()).resolve()
 
     @property
-    def input_regex(self) -> re.Pattern:
+    def input_regex(self) -> re.Pattern[str]:
         return re.compile(self.ui.lineEditInputRegex.text())
 
     @property
@@ -94,10 +117,10 @@ class MainWindow(QMainWindow):
     def recurs_search(self) -> bool:
         return self.ui.checkBoxRecursive.isChecked()
 
-    def _verify_src_dir(self):
+    def _validate_src_dir(self):
         self.ui.labelSrcDirErrMsg.setVisible(not Path(self.ui.lineEditSrcDir.text()).is_dir())
 
-    def _verify_output_pattern(self):
+    def _validate_output_pattern(self):
         msg: str = ''
         num_groups: list[int] = [*map(lambda i: int(i.strip('\\')), NUM_GROUP_RGX.findall(self.output_pattern))]
         if not self.output_pattern:
@@ -114,9 +137,11 @@ class MainWindow(QMainWindow):
         self.ui.pushButtonRenameFiles.setEnabled(msg == '')
 
         if msg == '':
-            self.ui.lineEditOutputPattern.setStyleSheet("color: black;")
+            self.ui.lineEditOutputPattern.setProperty('inputValid', 'True')
+            self.refresh_style()
         else:
-            self.ui.lineEditOutputPattern.setStyleSheet("color: red;")
+            self.ui.lineEditOutputPattern.setProperty('inputValid', 'False')
+            self.refresh_style()
 
     def _ask_src_dir(self):
         dlg = QFileDialog(self, directory=str(self.src_dir if self.src_dir.is_dir() else '.'))
@@ -156,6 +181,7 @@ class MainWindow(QMainWindow):
         self.ui.lineEditSrcDir.editingFinished.emit()
 
     def _update_mv_preview(self):
+        self._validate_output_pattern()
         self.ui.listWidgetMvBefore.clear()
         self.ui.listWidgetMvAfter.clear()
 
@@ -178,6 +204,7 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem()
             full_path: Path = self.src_dir / m.string
             item.setText(m.string + ('/' if full_path.is_dir() else ''))
+            item.setToolTip(str(Path(m.string).resolve()))
             self.ui.listWidgetMvBefore.addItem(item)
 
         if self.output_pattern and (self.ui.labelOutputPatternWarning.toolTip() == ''):
@@ -187,16 +214,36 @@ class MainWindow(QMainWindow):
                 try:
                     parsed: str = parse_output_pattern(self.output_pattern, m, full_path, warn_no_group=False)
                     item.setText(parsed + ('/' if full_path.is_dir() else ''))
+                    item.setToolTip(str(Path(parsed).resolve()))
                 except (AttributeError, ValueError) as e:
-                    dlg = DialogOK(self.style_sheet)
-                    dlg.setWindowTitle('Error parsing output pattern')
-                    dlg.ui.labelMessage.setText(f'{e.__class__.__name__}: {e}')
-                    dlg.exec()
+                    DialogOK.spawn('Error parsing output pattern', f'{e.__class__.__name__}: {e}',)
                     break
                 self.ui.listWidgetMvAfter.addItem(item)
 
+    def _validate_output_paths(self):
+        out_paths: list[Path] = []
+        final_parts: list[str] = []
+        for n in range(self.ui.listWidgetMvAfter.count()):
+            i: QListWidgetItem = self.ui.listWidgetMvAfter.item(n)
+            fp = Path(i.toolTip())
+            out_paths.append(fp)
+            if (final := fp.parts[-1]) in final_parts:
+                DialogOK.spawn('Output path validation error', 'All paths must end in a unique filename.')
+                return
+            final_parts.append(final)
+
+        print(out_paths)
+
     def _rename_files_clicked(self):
-        pass
+        self._validate_output_paths()
+        _, ret = DialogYN.spawn(
+            'Confirm renaming',
+            f'About to rename/move {self.ui.listWidgetMvBefore.count()} files.\nContinue?'
+        )
+        print(ret)
+
+    def refresh_style(self):
+        self.setStyleSheet(self.style_sheet)
 
 def run_gui() -> int | None:
     enable_logging(logger, 'INFO')

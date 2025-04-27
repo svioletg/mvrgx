@@ -55,12 +55,12 @@ def run_cli() -> int | None:
         help='Displays the captured files and what their new names would be, and exits without modifying any files.')
 
     args = parser.parse_args()
-    find_regex  : re.Pattern = args.regex
-    log_level   : str        = args.log
-    root        : Path       = args.at_dir
-    out_pattern : None | str = args.out
-    recurs      : bool       = args.recursive
-    preview     : bool       = args.preview
+    find_regex  : re.Pattern[str] = args.regex
+    log_level   : str             = args.log
+    root        : Path            = args.at_dir
+    out_pattern : None | str      = args.out
+    recurs      : bool            = args.recursive
+    preview     : bool            = args.preview
 
     enable_logging(logger, log_level.upper())
 

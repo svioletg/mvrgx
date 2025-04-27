@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>DialogYN</class>
+ <widget class="QDialog" name="DialogYN">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -23,10 +23,10 @@
     </rect>
    </property>
    <property name="orientation">
-    <enum>Qt::Horizontal</enum>
+    <enum>Qt::Orientation::Horizontal</enum>
    </property>
    <property name="standardButtons">
-    <set>QDialogButtonBox::No|QDialogButtonBox::Yes</set>
+    <set>QDialogButtonBox::StandardButton::No|QDialogButtonBox::StandardButton::Yes</set>
    </property>
    <property name="centerButtons">
     <bool>true</bool>
@@ -45,7 +45,7 @@
     <string>MESSAGE</string>
    </property>
    <property name="alignment">
-    <set>Qt::AlignCenter</set>
+    <set>Qt::AlignmentFlag::AlignCenter</set>
    </property>
    <property name="wordWrap">
     <bool>true</bool>
@@ -57,7 +57,7 @@
   <connection>
    <sender>buttonBoxYN</sender>
    <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>DialogYN</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -73,7 +73,7 @@
   <connection>
    <sender>buttonBoxYN</sender>
    <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>DialogYN</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

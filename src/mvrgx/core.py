@@ -59,4 +59,4 @@ def parse_output_pattern(
         meta_key = str(g.groups(0)[0])
         new_str = new_str.replace(meta_key, parse_meta_key(full_path, meta_key))
 
-    return new_str
+    return new_str.replace('\\\\', '\\')

@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="inputValid" stdset="0">
+   <bool>true</bool>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLabel" name="labelSrcDir">
     <property name="geometry">
@@ -107,6 +110,12 @@
       <height>20</height>
      </rect>
     </property>
+    <property name="text">
+     <string notr="true">(.+)</string>
+    </property>
+    <property name="placeholderText">
+     <string notr="true"/>
+    </property>
    </widget>
    <widget class="QLineEdit" name="lineEditOutputPattern">
     <property name="geometry">
@@ -116,6 +125,15 @@
       <width>360</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>\1</string>
+    </property>
+    <property name="placeholderText">
+     <string/>
+    </property>
+    <property name="inputValid" stdset="0">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButtonRenameFiles">
