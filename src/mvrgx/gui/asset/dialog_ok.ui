@@ -18,7 +18,7 @@
     <rect>
      <x>20</x>
      <y>20</y>
-     <width>351</width>
+     <width>360</width>
      <height>70</height>
     </rect>
    </property>
@@ -26,7 +26,7 @@
     <string>MESSAGE</string>
    </property>
    <property name="alignment">
-    <set>Qt::AlignCenter</set>
+    <set>Qt::AlignmentFlag::AlignCenter</set>
    </property>
    <property name="wordWrap">
     <bool>true</bool>
@@ -35,7 +35,7 @@
   <widget class="QPushButton" name="pushButtonOK">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>150</x>
      <y>100</y>
      <width>100</width>
      <height>30</height>

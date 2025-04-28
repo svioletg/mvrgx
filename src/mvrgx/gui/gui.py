@@ -1,9 +1,12 @@
 import re
 import sys
+import time
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Self
+from pprint import pprint
+from typing import Any, Protocol, Self
 
-from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QListWidgetItem, QMainWindow
+from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QListWidget, QListWidgetItem, QMainWindow
 
 from mvrgx.core import NUM_GROUP_RGX, parse_output_pattern
 from mvrgx.gui.ui_dialog_ok import Ui_DialogOK
@@ -19,53 +22,45 @@ STYLE_PATH: Path = PROJECT_ROOT / 'gui/asset/qstyle.css'
 STYLE_VAR_DEF_RGX: re.Pattern[str] = re.compile(r"(--.+?): (.+);")
 STYLE_VAR_ACCESS_RGX: re.Pattern[str] = re.compile(r"var\((.+)\)")
 
-def parse_style_sheet(fp: str | Path) -> str:
-    style_raw: str = Path(fp).read_text('utf-8')
+def listWidget_iter(widget: QListWidget) -> Generator[QListWidgetItem, None, None]:
+    for n in range(widget.count()):
+        yield widget.item(n)
 
-    if (m := re.search(r":root {(.*?)}", style_raw, flags=re.S)) is None:
-        style_root_inner: str = ''
-        style_sheet: str = style_raw
-    else:
-        style_root_inner: str = str(m.groups(0)[0])
-        style_sheet: str = style_raw[m.end(0):]
-
-    style_vars: dict[str, str] = dict(STYLE_VAR_DEF_RGX.findall(style_root_inner))
-
-    def _get_var(m: re.Match[str]) -> str:
-        key: str = str(m.groups(0)[0])
-        if key not in style_vars:
-            logger.error(f'CSS var "{key}" is not defined in {Path(fp).relative_to(PROJECT_ROOT)}')
-            return ''
-        return style_vars[key]
-    return STYLE_VAR_ACCESS_RGX.sub(_get_var, style_sheet)
-
-class Dialog[T: Any](QDialog):
-    ui_type: type[T] = NotImplemented
-
-    def __init__(self, ui_type: type[T], style_sheet: str = ''):
+class DialogOK(QDialog):
+    def __init__(self, style_sheet: str = ''):
         super().__init__()
-        self.ui: T = ui_type()
+        self.ui = Ui_DialogOK()
         self.ui.setupUi(self)
         self.setStyleSheet(style_sheet)
         self.style_sheet = style_sheet
 
-    @classmethod
-    def spawn(cls, title: str, body: str, **cls_kwargs) -> tuple[Self, int]:
-        """
-        Spawn a dialog box with a given title and message (body), returning the instanced object and its exit code.
-        """
-        inst = cls(cls.ui_type, **cls_kwargs)
-        inst.setWindowTitle(title)
-        inst.ui.labelMessage.setText(body)
-        ret = inst.exec()
-        return inst, ret
+class DialogYN(QDialog):
+    def __init__(self, style_sheet: str = ''):
+        super().__init__()
+        self.ui = Ui_DialogYN()
+        self.ui.setupUi(self)
+        self.setStyleSheet(style_sheet)
+        self.style_sheet = style_sheet
 
-class DialogOK(Dialog):
-    ui_type = Ui_DialogOK
-class DialogYN(Dialog):
-    ui_type = Ui_DialogYN
-class DialogTask(Dialog):
-    ui_type = Ui_DialogTask
+class DialogTask(QDialog):
+    def __init__(self, style_sheet: str = ''):
+        super().__init__()
+        self.ui = Ui_DialogTask()
+        self.ui.setupUi(self)
+        self.setStyleSheet(style_sheet)
+        self.style_sheet = style_sheet
+
+        self.ui.progressBar.setValue(0)
+
+def spawn_dialog[T: Any](cls: type[T], title: str, body: str, *, modal: bool = True, **cls_kwargs) -> tuple[T, int]:
+    """
+    Spawn a dialog box with a given title and message (body), returning the instanced object and its exit code.
+    """
+    inst = cls(**cls_kwargs)
+    inst.setWindowTitle(title)
+    inst.ui.labelMessage.setText(body)
+    ret = inst.exec() if modal else inst.open()
+    return inst, ret
 
 class MainWindow(QMainWindow):
     def __init__(self, style_sheet: str = ''):
@@ -160,7 +155,12 @@ class MainWindow(QMainWindow):
             self.ui.labelSrcDirCount.setText('Directory empty.')
             return
 
-        contents_dirs, contents_files = glob_sep(self.src_dir, '*', recurs=self.recurs_search, sort=True)
+        try:
+            contents_dirs, contents_files = glob_sep(self.src_dir, '*', sort=True)
+        except ValueError as e:
+            # DialogOK.spawn('Error', str(e), style_sheet=self.style_sheet)
+            x,y=spawn_dialog(Ui_DialogOK, 'Error', str(e), style_sheet=self.style_sheet)
+            return
 
         contents: list[Path] = [Path('../')] + contents_dirs + contents_files
         if len(contents) - 1 == 0:
@@ -188,7 +188,11 @@ class MainWindow(QMainWindow):
         if not self.src_dir.is_dir():
             return
 
-        contents_dirs, contents_files = glob_sep(self.src_dir, '*', recurs=self.recurs_search)
+        try:
+            contents_dirs, contents_files = glob_sep(self.src_dir, '*', recurs=self.recurs_search)
+        except ValueError as e:
+            spawn_dialog(DialogOK, 'Error', str(e), style_sheet=self.style_sheet)
+            return
 
         matched_dirs: list[re.Match[str]] = sorted([
             m for f in contents_dirs \
@@ -216,11 +220,16 @@ class MainWindow(QMainWindow):
                     item.setText(parsed + ('/' if full_path.is_dir() else ''))
                     item.setToolTip(str(Path(parsed).resolve()))
                 except (AttributeError, ValueError) as e:
-                    DialogOK.spawn('Error parsing output pattern', f'{e.__class__.__name__}: {e}',)
+                    spawn_dialog(
+                        DialogOK,
+                        'Error parsing output pattern',
+                        f'{e.__class__.__name__}: {e}',
+                        style_sheet=self.style_sheet
+                    )
                     break
                 self.ui.listWidgetMvAfter.addItem(item)
 
-    def _validate_output_paths(self):
+    def _validate_output_paths(self) -> bool:
         out_paths: list[Path] = []
         final_parts: list[str] = []
         for n in range(self.ui.listWidgetMvAfter.count()):
@@ -228,22 +237,73 @@ class MainWindow(QMainWindow):
             fp = Path(i.toolTip())
             out_paths.append(fp)
             if (final := fp.parts[-1]) in final_parts:
-                DialogOK.spawn('Output path validation error', 'All paths must end in a unique filename.')
-                return
+                spawn_dialog(
+                    DialogOK,
+                    'Output path validation error',
+                    'All paths must end in a unique filename.',
+                    style_sheet=self.style_sheet
+                )
+                return False
             final_parts.append(final)
 
-        print(out_paths)
+        return True
 
     def _rename_files_clicked(self):
-        self._validate_output_paths()
-        _, ret = DialogYN.spawn(
+        if not self._validate_output_paths():
+            return
+        _, ret = spawn_dialog(
+            DialogYN,
             'Confirm renaming',
-            f'About to rename/move {self.ui.listWidgetMvBefore.count()} files.\nContinue?'
+            f'About to rename/move {self.ui.listWidgetMvBefore.count()} files.\nContinue?',
+            style_sheet=self.style_sheet
         )
-        print(ret)
+
+        if ret == 0:
+            return
+        move_map: dict[Path, Path] = {}
+        for a, b in zip(listWidget_iter(self.ui.listWidgetMvBefore), listWidget_iter(self.ui.listWidgetMvAfter)):
+            move_map[Path(a.toolTip())] = Path(b.toolTip())
+        print(move_map)
+
+        dlg, _ = spawn_dialog(
+            DialogTask,
+            'Renaming...',
+            '',
+            modal=False,
+            style_sheet=self.style_sheet
+        )
+
+        for n, (k, v) in enumerate(move_map.items()):
+            print(n, k, v)
+            time.sleep(0.5)
+            i = QListWidgetItem()
+            i.setText(f'{k}  ->  {v}')
+            dlg.ui.listWidgetStatus.addItem(i)
+            dlg.ui.labelMessage.setText(f'{n} of {len(move_map)} moved...')
+            dlg.ui.progressBar.setValue(n // len(move_map))
 
     def refresh_style(self):
         self.setStyleSheet(self.style_sheet)
+
+def parse_style_sheet(fp: str | Path) -> str:
+    style_raw: str = Path(fp).read_text('utf-8')
+
+    if (m := re.search(r":root {(.*?)}", style_raw, flags=re.S)) is None:
+        style_root_inner: str = ''
+        style_sheet: str = style_raw
+    else:
+        style_root_inner: str = str(m.groups(0)[0])
+        style_sheet: str = style_raw[m.end(0):]
+
+    style_vars: dict[str, str] = dict(STYLE_VAR_DEF_RGX.findall(style_root_inner))
+
+    def _get_var(m: re.Match[str]) -> str:
+        key: str = str(m.groups(0)[0])
+        if key not in style_vars:
+            logger.error(f'CSS var "{key}" is not defined in {Path(fp).relative_to(PROJECT_ROOT)}')
+            return ''
+        return style_vars[key]
+    return STYLE_VAR_ACCESS_RGX.sub(_get_var, style_sheet)
 
 def run_gui() -> int | None:
     enable_logging(logger, 'INFO')

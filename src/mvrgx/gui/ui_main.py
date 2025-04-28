@@ -137,6 +137,14 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addItem(self.horizontalSpacer_2)
 
         MainWindow.setCentralWidget(self.centralwidget)
+        QWidget.setTabOrder(self.pushButtonSrcBrowse, self.lineEditSrcDir)
+        QWidget.setTabOrder(self.lineEditSrcDir, self.listWidgetSrcContents)
+        QWidget.setTabOrder(self.listWidgetSrcContents, self.lineEditInputRegex)
+        QWidget.setTabOrder(self.lineEditInputRegex, self.checkBoxRecursive)
+        QWidget.setTabOrder(self.checkBoxRecursive, self.listWidgetMvBefore)
+        QWidget.setTabOrder(self.listWidgetMvBefore, self.lineEditOutputPattern)
+        QWidget.setTabOrder(self.lineEditOutputPattern, self.listWidgetMvAfter)
+        QWidget.setTabOrder(self.listWidgetMvAfter, self.pushButtonRenameFiles)
 
         self.retranslateUi(MainWindow)
 

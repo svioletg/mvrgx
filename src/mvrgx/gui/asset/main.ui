@@ -311,6 +311,17 @@
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>pushButtonSrcBrowse</tabstop>
+  <tabstop>lineEditSrcDir</tabstop>
+  <tabstop>listWidgetSrcContents</tabstop>
+  <tabstop>lineEditInputRegex</tabstop>
+  <tabstop>checkBoxRecursive</tabstop>
+  <tabstop>listWidgetMvBefore</tabstop>
+  <tabstop>lineEditOutputPattern</tabstop>
+  <tabstop>listWidgetMvAfter</tabstop>
+  <tabstop>pushButtonRenameFiles</tabstop>
+ </tabstops>
  <resources>
   <include location="icons.qrc"/>
  </resources>

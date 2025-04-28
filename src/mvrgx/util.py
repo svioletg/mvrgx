@@ -33,7 +33,8 @@ def glob_sep(
         recurs: bool = False,
         flt: Callable[[Path], bool] | None = None,
         sort: bool | Callable = False,
-        sort_reverse: bool = False
+        sort_reverse: bool = False,
+        limit: int = 10_000,
     ) -> tuple[list[Path], list[Path]]:
     """
     `glob`s a directory with the given pattern, separating into two different lists of directories and files,
@@ -47,11 +48,14 @@ def glob_sep(
     """
     globbed_dirs: list[Path] = []
     globbed_files: list[Path] = []
+    n: int = 0
     for f in (src.rglob if recurs else src.glob)(pattern):
         if (flt is not None) and (flt(f) is False):
             continue
+        if n > limit:
+            raise ValueError(f'Search limit exceeded ({limit})')
         (globbed_dirs if f.is_dir() else globbed_files).append(f)
-
+        n += 1
     if sort is not False:
         sort_key: None | Callable = None if sort is True else sort
         globbed_dirs.sort(key=sort_key, reverse=sort_reverse)
