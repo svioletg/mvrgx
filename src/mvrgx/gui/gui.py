@@ -1,16 +1,17 @@
 import re
+import shutil
 import sys
-import time
 from collections.abc import Generator
 from pathlib import Path
-from pprint import pprint
-from typing import Any, Protocol, Self
+from typing import Any
 
-from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QListWidget, QListWidgetItem, QMainWindow
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QListWidget, QListWidgetItem, QMainWindow,
+                               QProgressDialog)
 
 from mvrgx.core import NUM_GROUP_RGX, parse_output_pattern
 from mvrgx.gui.ui_dialog_ok import Ui_DialogOK
-from mvrgx.gui.ui_dialog_task import Ui_DialogTask
+from mvrgx.gui.ui_dialog_rgx_sheet import Ui_DialogRgxSheet
 from mvrgx.gui.ui_dialog_yesno import Ui_DialogYN
 from mvrgx.gui.ui_main import Ui_MainWindow
 from mvrgx.logging import enable_logging, logger
@@ -42,23 +43,29 @@ class DialogYN(QDialog):
         self.setStyleSheet(style_sheet)
         self.style_sheet = style_sheet
 
-class DialogTask(QDialog):
+class DialogRgxSheet(QDialog):
     def __init__(self, style_sheet: str = ''):
         super().__init__()
-        self.ui = Ui_DialogTask()
+        self.ui = Ui_DialogRgxSheet()
         self.ui.setupUi(self)
         self.setStyleSheet(style_sheet)
         self.style_sheet = style_sheet
 
-        self.ui.progressBar.setValue(0)
-
-def spawn_dialog[T: Any](cls: type[T], title: str, body: str, *, modal: bool = True, **cls_kwargs) -> tuple[T, int]:
+def spawn_dialog[T: Any](
+        cls: type[T],
+        title: str,
+        body: str | None = '',
+        *,
+        modal: bool = True,
+        **cls_kwargs
+    ) -> tuple[T, int]:
     """
     Spawn a dialog box with a given title and message (body), returning the instanced object and its exit code.
     """
     inst = cls(**cls_kwargs)
     inst.setWindowTitle(title)
-    inst.ui.labelMessage.setText(body)
+    if body is not None:
+        inst.ui.labelMessage.setText(body)
     ret = inst.exec() if modal else inst.open()
     return inst, ret
 
@@ -87,6 +94,9 @@ class MainWindow(QMainWindow):
 
         self.ui.lineEditInputRegex.editingFinished.connect(self._update_mv_preview)
         self.ui.lineEditInputRegex.editingFinished.emit()
+        self.ui.pushButtonOpenRgxCheats.clicked.connect(
+            lambda: spawn_dialog(DialogRgxSheet, 'Path Regex Cheatsheet', None, modal=False)
+        )
 
         self.ui.lineEditOutputPattern.textChanged.connect(self._validate_output_pattern)
         self.ui.lineEditOutputPattern.editingFinished.connect(self._update_mv_preview)
@@ -95,7 +105,6 @@ class MainWindow(QMainWindow):
         self.ui.pushButtonRenameFiles.clicked.connect(self._rename_files_clicked)
 
         logger.info('UI init complete')
-
     @property
     def src_dir(self) -> Path:
         return Path(self.ui.lineEditSrcDir.text()).resolve()
@@ -158,8 +167,7 @@ class MainWindow(QMainWindow):
         try:
             contents_dirs, contents_files = glob_sep(self.src_dir, '*', sort=True)
         except ValueError as e:
-            # DialogOK.spawn('Error', str(e), style_sheet=self.style_sheet)
-            x,y=spawn_dialog(Ui_DialogOK, 'Error', str(e), style_sheet=self.style_sheet)
+            spawn_dialog(Ui_DialogOK, 'Error', str(e), style_sheet=self.style_sheet)
             return
 
         contents: list[Path] = [Path('../')] + contents_dirs + contents_files
@@ -208,7 +216,7 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem()
             full_path: Path = self.src_dir / m.string
             item.setText(m.string + ('/' if full_path.is_dir() else ''))
-            item.setToolTip(str(Path(m.string).resolve()))
+            item.setToolTip(str(full_path))
             self.ui.listWidgetMvBefore.addItem(item)
 
         if self.output_pattern and (self.ui.labelOutputPatternWarning.toolTip() == ''):
@@ -218,7 +226,7 @@ class MainWindow(QMainWindow):
                 try:
                     parsed: str = parse_output_pattern(self.output_pattern, m, full_path, warn_no_group=False)
                     item.setText(parsed + ('/' if full_path.is_dir() else ''))
-                    item.setToolTip(str(Path(parsed).resolve()))
+                    item.setToolTip(str(full_path.with_name(parsed)))
                 except (AttributeError, ValueError) as e:
                     spawn_dialog(
                         DialogOK,
@@ -263,24 +271,20 @@ class MainWindow(QMainWindow):
         move_map: dict[Path, Path] = {}
         for a, b in zip(listWidget_iter(self.ui.listWidgetMvBefore), listWidget_iter(self.ui.listWidgetMvAfter)):
             move_map[Path(a.toolTip())] = Path(b.toolTip())
-        print(move_map)
 
-        dlg, _ = spawn_dialog(
-            DialogTask,
-            'Renaming...',
-            '',
-            modal=False,
-            style_sheet=self.style_sheet
-        )
+        progress = QProgressDialog('Renaming...', 'Cancel', 0, len(move_map), minimumDuration=0)
+        progress.setStyleSheet(self.style_sheet)
+        progress.setWindowModality(Qt.WindowModality.ApplicationModal)
 
         for n, (k, v) in enumerate(move_map.items()):
-            print(n, k, v)
-            time.sleep(0.5)
-            i = QListWidgetItem()
-            i.setText(f'{k}  ->  {v}')
-            dlg.ui.listWidgetStatus.addItem(i)
-            dlg.ui.labelMessage.setText(f'{n} of {len(move_map)} moved...')
-            dlg.ui.progressBar.setValue(n // len(move_map))
+            logger.info(f'({(n / len(move_map)) * 100:.1f}%) {k} -> {v}')
+            progress.setLabelText(f'{k}  ->  {v}')
+            progress.setValue(n + 1)
+            if progress.wasCanceled():
+                break
+            shutil.move(k, v)
+
+        spawn_dialog(DialogOK, 'Complete', f'Moved/renamed {len(move_map)} files.')
 
     def refresh_style(self):
         self.setStyleSheet(self.style_sheet)

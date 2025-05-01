@@ -6,6 +6,7 @@
     --bttn-pressed-bg: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 grey, stop: 1 grey);
     --bttn-disabled-bg: rgba(0, 0, 0, 0);
     --item-selected-bg: #333;
+    --pbar-chunk-bg: green;
 
     --bttn-border: 1px solid grey;
     --item-selected-border: 1px solid grey;
@@ -13,6 +14,7 @@
     --txt-color: black;
     --bttn-disabled-txt-color: rgba(0, 0, 0, 0.5);
     --item-selected-txt-color: white;
+    --pbar-txt-color: black;
 }
 
 QWidget {
@@ -25,12 +27,13 @@ QLineEdit, QListWidget, QCheckBox::indicator {
 }
 
 QCheckBox::indicator {
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
 }
 
 QCheckBox::indicator:checked {
     image: url('src/mvrgx/gui/asset/img/checkmark.svg');
+    vertical-align: middle;
 }
 
 QListWidget::item:selected {
@@ -65,4 +68,15 @@ QLineEdit[inputValid="True"] {
 
 QLineEdit[inputValid="False"] {
     color: red;
+}
+
+QProgressBar {
+    background-color: var(--inner-bg);
+    color: var(--pbar-txt-color);
+    border: 1px solid var(--bttn-border);
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: var(--pbar-chunk-bg);
 }

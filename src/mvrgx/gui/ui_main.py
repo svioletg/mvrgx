@@ -56,12 +56,13 @@ class Ui_MainWindow(object):
         self.labelSrcDirCount.setGeometry(QRect(20, 180, 361, 30))
         self.lineEditInputRegex = QLineEdit(self.centralwidget)
         self.lineEditInputRegex.setObjectName(u"lineEditInputRegex")
-        self.lineEditInputRegex.setGeometry(QRect(20, 260, 360, 20))
-        self.lineEditInputRegex.setText(u"(.+)")
+        self.lineEditInputRegex.setGeometry(QRect(20, 260, 360, 30))
+        self.lineEditInputRegex.setStyleSheet(u"font-family: \"Cascadia Mono\", monospace;")
+        self.lineEditInputRegex.setText(u"(.+)\\..+$")
         self.lineEditInputRegex.setPlaceholderText(u"")
         self.lineEditOutputPattern = QLineEdit(self.centralwidget)
         self.lineEditOutputPattern.setObjectName(u"lineEditOutputPattern")
-        self.lineEditOutputPattern.setGeometry(QRect(420, 260, 360, 20))
+        self.lineEditOutputPattern.setGeometry(QRect(420, 260, 360, 30))
         self.lineEditOutputPattern.setProperty(u"inputValid", True)
         self.pushButtonRenameFiles = QPushButton(self.centralwidget)
         self.pushButtonRenameFiles.setObjectName(u"pushButtonRenameFiles")
@@ -85,7 +86,7 @@ class Ui_MainWindow(object):
         self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
         self.horizontalLayoutWidget = QWidget(self.centralwidget)
         self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(20, 240, 360, 24))
+        self.horizontalLayoutWidget.setGeometry(QRect(20, 240, 360, 21))
         self.horizontalLayoutInputRegex = QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayoutInputRegex.setObjectName(u"horizontalLayoutInputRegex")
         self.horizontalLayoutInputRegex.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
@@ -104,20 +105,25 @@ class Ui_MainWindow(object):
 
         self.horizontalLayoutInputRegex.addWidget(self.checkBoxRecursive)
 
+        self.pushButtonOpenRgxCheats = QPushButton(self.horizontalLayoutWidget)
+        self.pushButtonOpenRgxCheats.setObjectName(u"pushButtonOpenRgxCheats")
+
+        self.horizontalLayoutInputRegex.addWidget(self.pushButtonOpenRgxCheats)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayoutInputRegex.addItem(self.horizontalSpacer)
 
         self.horizontalLayoutWidget_2 = QWidget(self.centralwidget)
         self.horizontalLayoutWidget_2.setObjectName(u"horizontalLayoutWidget_2")
-        self.horizontalLayoutWidget_2.setGeometry(QRect(420, 240, 351, 22))
-        self.horizontalLayout_2 = QHBoxLayout(self.horizontalLayoutWidget_2)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayoutWidget_2.setGeometry(QRect(420, 240, 351, 21))
+        self.horizontalLayoutOutputPattern = QHBoxLayout(self.horizontalLayoutWidget_2)
+        self.horizontalLayoutOutputPattern.setObjectName(u"horizontalLayoutOutputPattern")
+        self.horizontalLayoutOutputPattern.setContentsMargins(0, 0, 0, 0)
         self.labelOutputPattern = QLabel(self.horizontalLayoutWidget_2)
         self.labelOutputPattern.setObjectName(u"labelOutputPattern")
 
-        self.horizontalLayout_2.addWidget(self.labelOutputPattern)
+        self.horizontalLayoutOutputPattern.addWidget(self.labelOutputPattern)
 
         self.labelOutputPatternWarning = QLabel(self.horizontalLayoutWidget_2)
         self.labelOutputPatternWarning.setObjectName(u"labelOutputPatternWarning")
@@ -130,11 +136,11 @@ class Ui_MainWindow(object):
         self.labelOutputPatternWarning.setPixmap(QPixmap(u":/icon/img/warning.svg"))
         self.labelOutputPatternWarning.setScaledContents(True)
 
-        self.horizontalLayout_2.addWidget(self.labelOutputPatternWarning)
+        self.horizontalLayoutOutputPattern.addWidget(self.labelOutputPatternWarning)
 
         self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.horizontalLayout_2.addItem(self.horizontalSpacer_2)
+        self.horizontalLayoutOutputPattern.addItem(self.horizontalSpacer_2)
 
         MainWindow.setCentralWidget(self.centralwidget)
         QWidget.setTabOrder(self.pushButtonSrcBrowse, self.lineEditSrcDir)
@@ -160,8 +166,15 @@ class Ui_MainWindow(object):
         self.lineEditOutputPattern.setText(QCoreApplication.translate("MainWindow", u"\\1", None))
         self.lineEditOutputPattern.setPlaceholderText("")
         self.pushButtonRenameFiles.setText(QCoreApplication.translate("MainWindow", u"Rename files", None))
+#if QT_CONFIG(tooltip)
+        self.listWidgetMvBefore.setToolTip(QCoreApplication.translate("MainWindow", u"Hover over a filename to see its full path", None))
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(tooltip)
+        self.listWidgetMvAfter.setToolTip(QCoreApplication.translate("MainWindow", u"Hover over an item to see its full path", None))
+#endif // QT_CONFIG(tooltip)
         self.labelInputRegex.setText(QCoreApplication.translate("MainWindow", u"Input regex", None))
         self.checkBoxRecursive.setText(QCoreApplication.translate("MainWindow", u"Recursive", None))
+        self.pushButtonOpenRgxCheats.setText(QCoreApplication.translate("MainWindow", u"Cheatsheet", None))
         self.labelOutputPattern.setText(QCoreApplication.translate("MainWindow", u"Output pattern", None))
         self.labelOutputPatternWarning.setText("")
     # retranslateUi

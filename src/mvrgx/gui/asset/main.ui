@@ -107,11 +107,14 @@
       <x>20</x>
       <y>260</y>
       <width>360</width>
-      <height>20</height>
+      <height>30</height>
      </rect>
     </property>
+    <property name="styleSheet">
+     <string notr="true">font-family: &quot;Cascadia Mono&quot;, monospace;</string>
+    </property>
     <property name="text">
-     <string notr="true">(.+)</string>
+     <string notr="true">(.+)\..+$</string>
     </property>
     <property name="placeholderText">
      <string notr="true"/>
@@ -123,7 +126,7 @@
       <x>420</x>
       <y>260</y>
       <width>360</width>
-      <height>20</height>
+      <height>30</height>
      </rect>
     </property>
     <property name="text">
@@ -174,6 +177,9 @@
       <height>230</height>
      </rect>
     </property>
+    <property name="toolTip">
+     <string>Hover over a filename to see its full path</string>
+    </property>
    </widget>
    <widget class="QListWidget" name="listWidgetMvAfter">
     <property name="geometry">
@@ -183,6 +189,9 @@
       <width>360</width>
       <height>230</height>
      </rect>
+    </property>
+    <property name="toolTip">
+     <string>Hover over an item to see its full path</string>
     </property>
    </widget>
    <widget class="Line" name="line_2">
@@ -204,7 +213,7 @@
       <x>20</x>
       <y>240</y>
       <width>360</width>
-      <height>24</height>
+      <height>21</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayoutInputRegex">
@@ -238,6 +247,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="pushButtonOpenRgxCheats">
+       <property name="text">
+        <string>Cheatsheet</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Orientation::Horizontal</enum>
@@ -258,10 +274,10 @@
       <x>420</x>
       <y>240</y>
       <width>351</width>
-      <height>22</height>
+      <height>21</height>
      </rect>
     </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="horizontalLayoutOutputPattern">
      <item>
       <widget class="QLabel" name="labelOutputPattern">
        <property name="text">
