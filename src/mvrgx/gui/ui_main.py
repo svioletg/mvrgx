@@ -15,10 +15,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout,
-    QLabel, QLayout, QLineEdit, QListWidget,
-    QListWidgetItem, QMainWindow, QPushButton, QSizePolicy,
-    QSpacerItem, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFrame,
+    QGridLayout, QHBoxLayout, QLabel, QLayout,
+    QLineEdit, QListWidget, QListWidgetItem, QMainWindow,
+    QPushButton, QSizePolicy, QSpacerItem, QVBoxLayout,
+    QWidget)
 from . import icons_rc
 
 class Ui_MainWindow(object):
@@ -29,103 +30,86 @@ class Ui_MainWindow(object):
         MainWindow.setProperty(u"inputValid", True)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
+        self.centralwidget.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.verticalLayout_4 = QVBoxLayout(self.centralwidget)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(20, 20, 20, 20)
+        self.verticalLayoutTopHalf = QVBoxLayout()
+        self.verticalLayoutTopHalf.setObjectName(u"verticalLayoutTopHalf")
+        self.verticalLayoutTopHalf.setContentsMargins(-1, -1, -1, 0)
         self.labelSrcDir = QLabel(self.centralwidget)
         self.labelSrcDir.setObjectName(u"labelSrcDir")
-        self.labelSrcDir.setGeometry(QRect(20, 10, 371, 20))
+
+        self.verticalLayoutTopHalf.addWidget(self.labelSrcDir)
+
+        self.horizontalLayoutSrcDir = QHBoxLayout()
+        self.horizontalLayoutSrcDir.setObjectName(u"horizontalLayoutSrcDir")
+        self.horizontalLayoutSrcDir.setContentsMargins(-1, -1, -1, 0)
         self.pushButtonSrcBrowse = QPushButton(self.centralwidget)
         self.pushButtonSrcBrowse.setObjectName(u"pushButtonSrcBrowse")
-        self.pushButtonSrcBrowse.setGeometry(QRect(20, 40, 71, 21))
+
+        self.horizontalLayoutSrcDir.addWidget(self.pushButtonSrcBrowse)
+
         self.lineEditSrcDir = QLineEdit(self.centralwidget)
         self.lineEditSrcDir.setObjectName(u"lineEditSrcDir")
-        self.lineEditSrcDir.setGeometry(QRect(100, 40, 290, 20))
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.lineEditSrcDir.sizePolicy().hasHeightForWidth())
         self.lineEditSrcDir.setSizePolicy(sizePolicy)
+
+        self.horizontalLayoutSrcDir.addWidget(self.lineEditSrcDir)
+
         self.labelSrcDirErrMsg = QLabel(self.centralwidget)
         self.labelSrcDirErrMsg.setObjectName(u"labelSrcDirErrMsg")
         self.labelSrcDirErrMsg.setEnabled(True)
-        self.labelSrcDirErrMsg.setGeometry(QRect(400, 40, 161, 21))
         self.labelSrcDirErrMsg.setStyleSheet(u"color: rgb(246, 97, 81);")
+
+        self.horizontalLayoutSrcDir.addWidget(self.labelSrcDirErrMsg)
+
+        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayoutSrcDir.addItem(self.horizontalSpacer_3)
+
+
+        self.verticalLayoutTopHalf.addLayout(self.horizontalLayoutSrcDir)
+
         self.listWidgetSrcContents = QListWidget(self.centralwidget)
         self.listWidgetSrcContents.setObjectName(u"listWidgetSrcContents")
-        self.listWidgetSrcContents.setGeometry(QRect(20, 70, 760, 111))
+
+        self.verticalLayoutTopHalf.addWidget(self.listWidgetSrcContents)
+
         self.labelSrcDirCount = QLabel(self.centralwidget)
         self.labelSrcDirCount.setObjectName(u"labelSrcDirCount")
-        self.labelSrcDirCount.setGeometry(QRect(20, 180, 361, 30))
-        self.lineEditInputRegex = QLineEdit(self.centralwidget)
-        self.lineEditInputRegex.setObjectName(u"lineEditInputRegex")
-        self.lineEditInputRegex.setGeometry(QRect(20, 260, 360, 30))
-        self.lineEditInputRegex.setStyleSheet(u"font-family: \"Cascadia Mono\", monospace;")
-        self.lineEditInputRegex.setText(u"(.+)\\..+$")
-        self.lineEditInputRegex.setPlaceholderText(u"")
-        self.lineEditOutputPattern = QLineEdit(self.centralwidget)
-        self.lineEditOutputPattern.setObjectName(u"lineEditOutputPattern")
-        self.lineEditOutputPattern.setGeometry(QRect(420, 260, 360, 30))
-        self.lineEditOutputPattern.setProperty(u"inputValid", True)
-        self.pushButtonRenameFiles = QPushButton(self.centralwidget)
-        self.pushButtonRenameFiles.setObjectName(u"pushButtonRenameFiles")
-        self.pushButtonRenameFiles.setEnabled(False)
-        self.pushButtonRenameFiles.setGeometry(QRect(20, 540, 761, 40))
-        self.line = QFrame(self.centralwidget)
-        self.line.setObjectName(u"line")
-        self.line.setGeometry(QRect(20, 210, 760, 3))
-        self.line.setFrameShape(QFrame.Shape.HLine)
-        self.line.setFrameShadow(QFrame.Shadow.Sunken)
-        self.listWidgetMvBefore = QListWidget(self.centralwidget)
-        self.listWidgetMvBefore.setObjectName(u"listWidgetMvBefore")
-        self.listWidgetMvBefore.setGeometry(QRect(20, 290, 360, 230))
-        self.listWidgetMvAfter = QListWidget(self.centralwidget)
-        self.listWidgetMvAfter.setObjectName(u"listWidgetMvAfter")
-        self.listWidgetMvAfter.setGeometry(QRect(420, 289, 360, 230))
+
+        self.verticalLayoutTopHalf.addWidget(self.labelSrcDirCount)
+
+
+        self.verticalLayout_4.addLayout(self.verticalLayoutTopHalf)
+
         self.line_2 = QFrame(self.centralwidget)
         self.line_2.setObjectName(u"line_2")
-        self.line_2.setGeometry(QRect(400, 220, 3, 300))
-        self.line_2.setFrameShape(QFrame.Shape.VLine)
+        self.line_2.setFrameShape(QFrame.Shape.HLine)
         self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
-        self.horizontalLayoutWidget = QWidget(self.centralwidget)
-        self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(20, 240, 360, 21))
-        self.horizontalLayoutInputRegex = QHBoxLayout(self.horizontalLayoutWidget)
-        self.horizontalLayoutInputRegex.setObjectName(u"horizontalLayoutInputRegex")
-        self.horizontalLayoutInputRegex.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
-        self.horizontalLayoutInputRegex.setContentsMargins(0, 0, 0, 0)
-        self.labelInputRegex = QLabel(self.horizontalLayoutWidget)
-        self.labelInputRegex.setObjectName(u"labelInputRegex")
 
-        self.horizontalLayoutInputRegex.addWidget(self.labelInputRegex)
+        self.verticalLayout_4.addWidget(self.line_2)
 
-        self.checkBoxRecursive = QCheckBox(self.horizontalLayoutWidget)
-        self.checkBoxRecursive.setObjectName(u"checkBoxRecursive")
-        self.checkBoxRecursive.setAutoFillBackground(False)
-        self.checkBoxRecursive.setStyleSheet(u"")
-        self.checkBoxRecursive.setChecked(False)
-        self.checkBoxRecursive.setTristate(False)
+        self.gridLayoutInOut = QGridLayout()
+        self.gridLayoutInOut.setObjectName(u"gridLayoutInOut")
+        self.gridLayoutInOut.setContentsMargins(-1, -1, -1, 0)
+        self.listWidgetMvAfter = QListWidget(self.centralwidget)
+        self.listWidgetMvAfter.setObjectName(u"listWidgetMvAfter")
 
-        self.horizontalLayoutInputRegex.addWidget(self.checkBoxRecursive)
+        self.gridLayoutInOut.addWidget(self.listWidgetMvAfter, 2, 1, 1, 1)
 
-        self.pushButtonOpenRgxCheats = QPushButton(self.horizontalLayoutWidget)
-        self.pushButtonOpenRgxCheats.setObjectName(u"pushButtonOpenRgxCheats")
-
-        self.horizontalLayoutInputRegex.addWidget(self.pushButtonOpenRgxCheats)
-
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-
-        self.horizontalLayoutInputRegex.addItem(self.horizontalSpacer)
-
-        self.horizontalLayoutWidget_2 = QWidget(self.centralwidget)
-        self.horizontalLayoutWidget_2.setObjectName(u"horizontalLayoutWidget_2")
-        self.horizontalLayoutWidget_2.setGeometry(QRect(420, 240, 351, 21))
-        self.horizontalLayoutOutputPattern = QHBoxLayout(self.horizontalLayoutWidget_2)
+        self.horizontalLayoutOutputPattern = QHBoxLayout()
         self.horizontalLayoutOutputPattern.setObjectName(u"horizontalLayoutOutputPattern")
-        self.horizontalLayoutOutputPattern.setContentsMargins(0, 0, 0, 0)
-        self.labelOutputPattern = QLabel(self.horizontalLayoutWidget_2)
+        self.labelOutputPattern = QLabel(self.centralwidget)
         self.labelOutputPattern.setObjectName(u"labelOutputPattern")
 
         self.horizontalLayoutOutputPattern.addWidget(self.labelOutputPattern)
 
-        self.labelOutputPatternWarning = QLabel(self.horizontalLayoutWidget_2)
+        self.labelOutputPatternWarning = QLabel(self.centralwidget)
         self.labelOutputPatternWarning.setObjectName(u"labelOutputPatternWarning")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
@@ -142,17 +126,130 @@ class Ui_MainWindow(object):
 
         self.horizontalLayoutOutputPattern.addItem(self.horizontalSpacer_2)
 
+
+        self.gridLayoutInOut.addLayout(self.horizontalLayoutOutputPattern, 0, 1, 1, 1)
+
+        self.listWidgetMvBefore = QListWidget(self.centralwidget)
+        self.listWidgetMvBefore.setObjectName(u"listWidgetMvBefore")
+
+        self.gridLayoutInOut.addWidget(self.listWidgetMvBefore, 2, 0, 1, 1)
+
+        self.lineEditOutputPattern = QLineEdit(self.centralwidget)
+        self.lineEditOutputPattern.setObjectName(u"lineEditOutputPattern")
+        self.lineEditOutputPattern.setProperty(u"inputValid", True)
+
+        self.gridLayoutInOut.addWidget(self.lineEditOutputPattern, 1, 1, 1, 1)
+
+        self.lineEditInputRegex = QLineEdit(self.centralwidget)
+        self.lineEditInputRegex.setObjectName(u"lineEditInputRegex")
+        self.lineEditInputRegex.setStyleSheet(u"font-family: \"Cascadia Mono\", monospace;")
+        self.lineEditInputRegex.setText(u"(.+)\\..+$")
+        self.lineEditInputRegex.setPlaceholderText(u"")
+
+        self.gridLayoutInOut.addWidget(self.lineEditInputRegex, 1, 0, 1, 1)
+
+        self.horizontalLayoutInputRegex = QHBoxLayout()
+        self.horizontalLayoutInputRegex.setObjectName(u"horizontalLayoutInputRegex")
+        self.horizontalLayoutInputRegex.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
+        self.horizontalLayoutInputRegex.setContentsMargins(-1, -1, 0, -1)
+        self.labelInputRegex = QLabel(self.centralwidget)
+        self.labelInputRegex.setObjectName(u"labelInputRegex")
+        self.labelInputRegex.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
+
+        self.horizontalLayoutInputRegex.addWidget(self.labelInputRegex)
+
+        self.checkBoxRecursive = QCheckBox(self.centralwidget)
+        self.checkBoxRecursive.setObjectName(u"checkBoxRecursive")
+        self.checkBoxRecursive.setAutoFillBackground(False)
+        self.checkBoxRecursive.setStyleSheet(u"")
+        self.checkBoxRecursive.setChecked(False)
+        self.checkBoxRecursive.setTristate(False)
+
+        self.horizontalLayoutInputRegex.addWidget(self.checkBoxRecursive)
+
+        self.comboBoxInputFilter = QComboBox(self.centralwidget)
+        self.comboBoxInputFilter.addItem("")
+        self.comboBoxInputFilter.addItem("")
+        self.comboBoxInputFilter.addItem("")
+        self.comboBoxInputFilter.setObjectName(u"comboBoxInputFilter")
+        self.comboBoxInputFilter.setEditable(False)
+
+        self.horizontalLayoutInputRegex.addWidget(self.comboBoxInputFilter)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayoutInputRegex.addItem(self.horizontalSpacer)
+
+
+        self.gridLayoutInOut.addLayout(self.horizontalLayoutInputRegex, 0, 0, 1, 1)
+
+
+        self.verticalLayout_4.addLayout(self.gridLayoutInOut)
+
+        self.line = QFrame(self.centralwidget)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.Shape.HLine)
+        self.line.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.verticalLayout_4.addWidget(self.line)
+
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(-1, -1, -1, 0)
+        self.pushButtonRenameFiles = QPushButton(self.centralwidget)
+        self.pushButtonRenameFiles.setObjectName(u"pushButtonRenameFiles")
+        self.pushButtonRenameFiles.setEnabled(False)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy2.setHorizontalStretch(3)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.pushButtonRenameFiles.sizePolicy().hasHeightForWidth())
+        self.pushButtonRenameFiles.setSizePolicy(sizePolicy2)
+        self.pushButtonRenameFiles.setMinimumSize(QSize(0, 0))
+        self.pushButtonRenameFiles.setStyleSheet(u"")
+        self.pushButtonRenameFiles.setProperty(u"thickButton", True)
+
+        self.horizontalLayout.addWidget(self.pushButtonRenameFiles)
+
+        self.pushButtonUndoRename = QPushButton(self.centralwidget)
+        self.pushButtonUndoRename.setObjectName(u"pushButtonUndoRename")
+        self.pushButtonUndoRename.setEnabled(False)
+        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        sizePolicy3.setHorizontalStretch(1)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.pushButtonUndoRename.sizePolicy().hasHeightForWidth())
+        self.pushButtonUndoRename.setSizePolicy(sizePolicy3)
+        icon = QIcon(QIcon.fromTheme(QIcon.ThemeIcon.EditUndo))
+        self.pushButtonUndoRename.setIcon(icon)
+        self.pushButtonUndoRename.setCheckable(False)
+        self.pushButtonUndoRename.setFlat(False)
+        self.pushButtonUndoRename.setProperty(u"thickButton", True)
+
+        self.horizontalLayout.addWidget(self.pushButtonUndoRename)
+
+
+        self.verticalLayout_4.addLayout(self.horizontalLayout)
+
         MainWindow.setCentralWidget(self.centralwidget)
+#if QT_CONFIG(shortcut)
+        self.labelSrcDir.setBuddy(self.lineEditSrcDir)
+        self.labelOutputPattern.setBuddy(self.lineEditOutputPattern)
+        self.labelInputRegex.setBuddy(self.lineEditInputRegex)
+#endif // QT_CONFIG(shortcut)
         QWidget.setTabOrder(self.pushButtonSrcBrowse, self.lineEditSrcDir)
         QWidget.setTabOrder(self.lineEditSrcDir, self.listWidgetSrcContents)
-        QWidget.setTabOrder(self.listWidgetSrcContents, self.lineEditInputRegex)
-        QWidget.setTabOrder(self.lineEditInputRegex, self.checkBoxRecursive)
-        QWidget.setTabOrder(self.checkBoxRecursive, self.listWidgetMvBefore)
+        QWidget.setTabOrder(self.listWidgetSrcContents, self.checkBoxRecursive)
+        QWidget.setTabOrder(self.checkBoxRecursive, self.comboBoxInputFilter)
+        QWidget.setTabOrder(self.comboBoxInputFilter, self.lineEditInputRegex)
+        QWidget.setTabOrder(self.lineEditInputRegex, self.listWidgetMvBefore)
         QWidget.setTabOrder(self.listWidgetMvBefore, self.lineEditOutputPattern)
         QWidget.setTabOrder(self.lineEditOutputPattern, self.listWidgetMvAfter)
         QWidget.setTabOrder(self.listWidgetMvAfter, self.pushButtonRenameFiles)
+        QWidget.setTabOrder(self.pushButtonRenameFiles, self.pushButtonUndoRename)
 
         self.retranslateUi(MainWindow)
+
+        self.pushButtonUndoRename.setDefault(False)
+
 
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
@@ -163,19 +260,26 @@ class Ui_MainWindow(object):
         self.pushButtonSrcBrowse.setText(QCoreApplication.translate("MainWindow", u"Browse...", None))
         self.labelSrcDirErrMsg.setText(QCoreApplication.translate("MainWindow", u"Invalid directory.", None))
         self.labelSrcDirCount.setText(QCoreApplication.translate("MainWindow", u"0 items", None))
-        self.lineEditOutputPattern.setText(QCoreApplication.translate("MainWindow", u"\\1", None))
-        self.lineEditOutputPattern.setPlaceholderText("")
-        self.pushButtonRenameFiles.setText(QCoreApplication.translate("MainWindow", u"Rename files", None))
-#if QT_CONFIG(tooltip)
-        self.listWidgetMvBefore.setToolTip(QCoreApplication.translate("MainWindow", u"Hover over a filename to see its full path", None))
-#endif // QT_CONFIG(tooltip)
 #if QT_CONFIG(tooltip)
         self.listWidgetMvAfter.setToolTip(QCoreApplication.translate("MainWindow", u"Hover over an item to see its full path", None))
 #endif // QT_CONFIG(tooltip)
-        self.labelInputRegex.setText(QCoreApplication.translate("MainWindow", u"Input regex", None))
-        self.checkBoxRecursive.setText(QCoreApplication.translate("MainWindow", u"Recursive", None))
-        self.pushButtonOpenRgxCheats.setText(QCoreApplication.translate("MainWindow", u"Cheatsheet", None))
         self.labelOutputPattern.setText(QCoreApplication.translate("MainWindow", u"Output pattern", None))
         self.labelOutputPatternWarning.setText("")
+#if QT_CONFIG(tooltip)
+        self.listWidgetMvBefore.setToolTip(QCoreApplication.translate("MainWindow", u"Hover over a filename to see its full path", None))
+#endif // QT_CONFIG(tooltip)
+        self.lineEditOutputPattern.setText(QCoreApplication.translate("MainWindow", u"\\1", None))
+        self.lineEditOutputPattern.setPlaceholderText("")
+        self.labelInputRegex.setText(QCoreApplication.translate("MainWindow", u"Input regex", None))
+        self.checkBoxRecursive.setText(QCoreApplication.translate("MainWindow", u"Recursive", None))
+        self.comboBoxInputFilter.setItemText(0, QCoreApplication.translate("MainWindow", u"All", None))
+        self.comboBoxInputFilter.setItemText(1, QCoreApplication.translate("MainWindow", u"Only directories", None))
+        self.comboBoxInputFilter.setItemText(2, QCoreApplication.translate("MainWindow", u"Only files", None))
+
+#if QT_CONFIG(tooltip)
+        self.comboBoxInputFilter.setToolTip(QCoreApplication.translate("MainWindow", u"Choose how to filter matched results.", None))
+#endif // QT_CONFIG(tooltip)
+        self.pushButtonRenameFiles.setText(QCoreApplication.translate("MainWindow", u"Rename files", None))
+        self.pushButtonUndoRename.setText(QCoreApplication.translate("MainWindow", u"Undo", None))
     # retranslateUi
 

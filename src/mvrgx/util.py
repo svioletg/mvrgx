@@ -62,3 +62,11 @@ def glob_sep(
         globbed_files.sort(key=sort_key, reverse=sort_reverse)
 
     return globbed_dirs, globbed_files
+
+def closest_existing_dir(fp: Path) -> Path | None:
+    """Find the closest existing dir in a path, returning None if no more parents are left to search."""
+    if fp.is_dir():
+        return fp
+    if len(fp.parts) == 1:
+        return None
+    return closest_existing_dir(fp.parent)

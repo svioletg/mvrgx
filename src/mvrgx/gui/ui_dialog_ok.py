@@ -15,22 +15,44 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDialog, QLabel, QPushButton,
-    QSizePolicy, QWidget)
+from PySide6.QtWidgets import (QApplication, QDialog, QGridLayout, QLabel,
+    QPushButton, QSizePolicy, QWidget)
 
 class Ui_DialogOK(object):
     def setupUi(self, DialogOK):
         if not DialogOK.objectName():
             DialogOK.setObjectName(u"DialogOK")
         DialogOK.resize(400, 150)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(DialogOK.sizePolicy().hasHeightForWidth())
+        DialogOK.setSizePolicy(sizePolicy)
+        self.gridLayout = QGridLayout(DialogOK)
+        self.gridLayout.setObjectName(u"gridLayout")
         self.labelMessage = QLabel(DialogOK)
         self.labelMessage.setObjectName(u"labelMessage")
-        self.labelMessage.setGeometry(QRect(20, 20, 360, 70))
+        sizePolicy.setHeightForWidth(self.labelMessage.sizePolicy().hasHeightForWidth())
+        self.labelMessage.setSizePolicy(sizePolicy)
         self.labelMessage.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.labelMessage.setWordWrap(True)
+
+        self.gridLayout.addWidget(self.labelMessage, 0, 0, 1, 1)
+
         self.pushButtonOK = QPushButton(DialogOK)
         self.pushButtonOK.setObjectName(u"pushButtonOK")
-        self.pushButtonOK.setGeometry(QRect(150, 100, 100, 30))
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.pushButtonOK.sizePolicy().hasHeightForWidth())
+        self.pushButtonOK.setSizePolicy(sizePolicy1)
+        self.pushButtonOK.setAutoFillBackground(False)
+        self.pushButtonOK.setStyleSheet(u"")
+
+        self.gridLayout.addWidget(self.pushButtonOK, 1, 0, 1, 1, Qt.AlignmentFlag.AlignHCenter)
+
+        self.pushButtonOK.raise_()
+        self.labelMessage.raise_()
 
         self.retranslateUi(DialogOK)
         self.pushButtonOK.clicked.connect(DialogOK.accept)

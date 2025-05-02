@@ -1,2 +1,3 @@
-checkmark.svg - https://www.svgrepo.com/svg/535263/checkmark
+checkmark.svg - https://www.svgrepo.com/svg/485672/checkmark2
 warning.svg - https://www.svgrepo.com/svg/485943/warning
+cancel.svg - https://www.svgrepo.com/svg/367798/cancel

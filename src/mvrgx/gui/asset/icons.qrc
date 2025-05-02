@@ -1,6 +1,7 @@
 <RCC>
-    <qresource prefix="/icon">
-        <file>img/warning.svg</file>
-        <file>img/checkmark.svg</file>
-    </qresource>
+  <qresource prefix="/icon">
+    <file>img/cancel.svg</file>
+    <file>img/warning.svg</file>
+    <file>img/checkmark.svg</file>
+  </qresource>
 </RCC>

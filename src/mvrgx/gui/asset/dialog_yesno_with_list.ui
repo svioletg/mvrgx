@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DialogYN</class>
- <widget class="QDialog" name="DialogYN">
+ <class>DialogYNList</class>
+ <widget class="QDialog" name="DialogYNList">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>150</height>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,6 +16,9 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="QLabel" name="labelMessage">
+     <property name="styleSheet">
+      <string notr="true">padding: 1em;</string>
+     </property>
      <property name="text">
       <string>MESSAGE</string>
      </property>
@@ -28,6 +31,9 @@
     </widget>
    </item>
    <item row="1" column="0">
+    <widget class="QListWidget" name="listWidget"/>
+   </item>
+   <item row="2" column="0">
     <widget class="QDialogButtonBox" name="buttonBoxYN">
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
@@ -47,7 +53,7 @@
   <connection>
    <sender>buttonBoxYN</sender>
    <signal>accepted()</signal>
-   <receiver>DialogYN</receiver>
+   <receiver>DialogYNList</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -63,7 +69,7 @@
   <connection>
    <sender>buttonBoxYN</sender>
    <signal>rejected()</signal>
-   <receiver>DialogYN</receiver>
+   <receiver>DialogYNList</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

@@ -11,14 +11,14 @@ from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QListWidget, 
 
 from mvrgx.core import NUM_GROUP_RGX, parse_output_pattern
 from mvrgx.gui.ui_dialog_ok import Ui_DialogOK
-from mvrgx.gui.ui_dialog_rgx_sheet import Ui_DialogRgxSheet
 from mvrgx.gui.ui_dialog_yesno import Ui_DialogYN
+from mvrgx.gui.ui_dialog_yesno_with_list import Ui_DialogYNList
 from mvrgx.gui.ui_main import Ui_MainWindow
 from mvrgx.logging import enable_logging, logger
 from mvrgx.project import PROJECT_ROOT, VERSION
-from mvrgx.util import glob_sep
+from mvrgx.util import closest_existing_dir, glob_sep
 
-STYLE_PATH: Path = PROJECT_ROOT / 'gui/asset/qstyle.css'
+STYLE_CSS_PATH: Path = PROJECT_ROOT / 'gui/asset/qstyle.css'
 
 STYLE_VAR_DEF_RGX: re.Pattern[str] = re.compile(r"(--.+?): (.+);")
 STYLE_VAR_ACCESS_RGX: re.Pattern[str] = re.compile(r"var\((.+)\)")
@@ -43,13 +43,16 @@ class DialogYN(QDialog):
         self.setStyleSheet(style_sheet)
         self.style_sheet = style_sheet
 
-class DialogRgxSheet(QDialog):
-    def __init__(self, style_sheet: str = ''):
+class DialogYNList(QDialog):
+    def __init__(self, items: list[str] | None = None, style_sheet: str = ''):
         super().__init__()
-        self.ui = Ui_DialogRgxSheet()
+        self.ui = Ui_DialogYNList()
         self.ui.setupUi(self)
         self.setStyleSheet(style_sheet)
         self.style_sheet = style_sheet
+
+        if items is not None:
+            self.ui.listWidget.addItems(items)
 
 def spawn_dialog[T: Any](
         cls: type[T],
@@ -68,6 +71,22 @@ def spawn_dialog[T: Any](
         inst.ui.labelMessage.setText(body)
     ret = inst.exec() if modal else inst.open()
     return inst, ret
+
+# def populate_list(widget: QListWidget, items: list[str], append: bool = True):
+#     """
+#     Fills a given list widget with items, each containing a string from the given list.
+
+#     :param append: If `True`, add items onto the existing list. `False` will clear the list of its items beforehand.
+#     """
+#     for s in items:
+#         i = QListWidgetItem()
+#         i.setText(s)
+#         widget.addItem
+
+class PathSearchFilter:
+    ALL = 0
+    ONLY_DIRS = 1
+    ONLY_FILES = 2
 
 class MainWindow(QMainWindow):
     def __init__(self, style_sheet: str = ''):
@@ -94,17 +113,27 @@ class MainWindow(QMainWindow):
 
         self.ui.lineEditInputRegex.editingFinished.connect(self._update_mv_preview)
         self.ui.lineEditInputRegex.editingFinished.emit()
-        self.ui.pushButtonOpenRgxCheats.clicked.connect(
-            lambda: spawn_dialog(DialogRgxSheet, 'Path Regex Cheatsheet', None, modal=False)
-        )
 
         self.ui.lineEditOutputPattern.textChanged.connect(self._validate_output_pattern)
         self.ui.lineEditOutputPattern.editingFinished.connect(self._update_mv_preview)
         self.ui.lineEditOutputPattern.editingFinished.emit()
 
         self.ui.pushButtonRenameFiles.clicked.connect(self._rename_files_clicked)
+        self.ui.pushButtonUndoRename.clicked.connect(self._undo_rename_files_clicked)
+
+        self._last_move: dict[Path, Path] | None = None
 
         logger.info('UI init complete')
+
+    @property
+    def last_move(self) -> dict[Path, Path] | None:
+        return self._last_move
+
+    @last_move.setter
+    def last_move(self, value: dict[Path, Path] | None):
+        self._last_move = value
+        self.ui.pushButtonUndoRename.setEnabled(value is not None)
+
     @property
     def src_dir(self) -> Path:
         return Path(self.ui.lineEditSrcDir.text()).resolve()
@@ -120,6 +149,10 @@ class MainWindow(QMainWindow):
     @property
     def recurs_search(self) -> bool:
         return self.ui.checkBoxRecursive.isChecked()
+
+    @property
+    def input_filter(self) -> int:
+        return self.ui.comboBoxInputFilter.currentIndex()
 
     def _validate_src_dir(self):
         self.ui.labelSrcDirErrMsg.setVisible(not Path(self.ui.lineEditSrcDir.text()).is_dir())
@@ -141,10 +174,10 @@ class MainWindow(QMainWindow):
         self.ui.pushButtonRenameFiles.setEnabled(msg == '')
 
         if msg == '':
-            self.ui.lineEditOutputPattern.setProperty('inputValid', 'True')
+            self.ui.lineEditOutputPattern.setProperty('inputValid', True)
             self.refresh_style()
         else:
-            self.ui.lineEditOutputPattern.setProperty('inputValid', 'False')
+            self.ui.lineEditOutputPattern.setProperty('inputValid', False)
             self.refresh_style()
 
     def _ask_src_dir(self):
@@ -212,7 +245,17 @@ class MainWindow(QMainWindow):
             if (m := self.input_regex.search(str(f.relative_to(self.src_dir))))
         ], key=lambda i: i.string)
 
-        for m in matched_dirs + matched_files:
+        match self.input_filter:
+            case PathSearchFilter.ALL:
+                matched = matched_dirs + matched_files
+            case PathSearchFilter.ONLY_DIRS:
+                matched = matched_dirs
+            case PathSearchFilter.ONLY_FILES:
+                matched = matched_files
+            case _:
+                raise ValueError(f'Unexpected path search filter index: {self.input_filter}')
+
+        for m in matched:
             item = QListWidgetItem()
             full_path: Path = self.src_dir / m.string
             item.setText(m.string + ('/' if full_path.is_dir() else ''))
@@ -220,13 +263,13 @@ class MainWindow(QMainWindow):
             self.ui.listWidgetMvBefore.addItem(item)
 
         if self.output_pattern and (self.ui.labelOutputPatternWarning.toolTip() == ''):
-            for m in matched_dirs + matched_files:
+            for m in matched:
                 item = QListWidgetItem()
                 full_path: Path = self.src_dir / m.string
                 try:
                     parsed: str = parse_output_pattern(self.output_pattern, m, full_path, warn_no_group=False)
                     item.setText(parsed + ('/' if full_path.is_dir() else ''))
-                    item.setToolTip(str(full_path.with_name(parsed)))
+                    item.setToolTip(str(Path(*full_path.parts[:-1], parsed)))
                 except (AttributeError, ValueError) as e:
                     spawn_dialog(
                         DialogOK,
@@ -234,6 +277,7 @@ class MainWindow(QMainWindow):
                         f'{e.__class__.__name__}: {e}',
                         style_sheet=self.style_sheet
                     )
+                    logger.exception(e)
                     break
                 self.ui.listWidgetMvAfter.addItem(item)
 
@@ -265,31 +309,89 @@ class MainWindow(QMainWindow):
             f'About to rename/move {self.ui.listWidgetMvBefore.count()} files.\nContinue?',
             style_sheet=self.style_sheet
         )
-
         if ret == 0:
             return
+
         move_map: dict[Path, Path] = {}
         for a, b in zip(listWidget_iter(self.ui.listWidgetMvBefore), listWidget_iter(self.ui.listWidgetMvAfter)):
             move_map[Path(a.toolTip())] = Path(b.toolTip())
 
+        self.rename_files(move_map)
+
+    def _undo_rename_files_clicked(self):
+        if self.last_move is None:
+            spawn_dialog(DialogOK, 'mvrgx', 'Nothing to undo.')
+            return
+        _, ret = spawn_dialog(
+            DialogYNList,
+            'Confirm undo',
+            f'Undo the following {len(self.last_move)} actions?',
+            items=[f'Moved "{k}" to "{v}"' for k, v in self.last_move.items()]
+        )
+        if ret == 0:
+            return
+
+        self.rename_files({v:k for k, v in self.last_move.items()})
+
+    def rename_files(self, move_map: dict[Path, Path]):
         progress = QProgressDialog('Renaming...', 'Cancel', 0, len(move_map), minimumDuration=0)
         progress.setStyleSheet(self.style_sheet)
         progress.setWindowModality(Qt.WindowModality.ApplicationModal)
 
-        for n, (k, v) in enumerate(move_map.items()):
-            logger.info(f'({(n / len(move_map)) * 100:.1f}%) {k} -> {v}')
-            progress.setLabelText(f'{k}  ->  {v}')
-            progress.setValue(n + 1)
-            if progress.wasCanceled():
-                break
-            shutil.move(k, v)
+        self.last_move = {}
+        for n, (src, dest) in enumerate(move_map.items()):
+            try:
+                logger.debug(f'({n}/{len(move_map)}) {src} -> {dest}')
+                progress.setLabelText(f'{src}  ->  {dest}')
+                progress.setValue(n + 1)
+                if progress.wasCanceled():
+                    break
 
-        spawn_dialog(DialogOK, 'Complete', f'Moved/renamed {len(move_map)} files.')
+                if not dest.parent.is_dir():
+                    if (closest := closest_existing_dir(dest)) is None:
+                        spawn_dialog(
+                            DialogOK,
+                            'Error',
+                            f'No existing directory could be found along the path: {dest}'
+                            + '\nThis is likely a bug; renaming will be aborted.'
+                        )
+                        break
+                    _, ret = spawn_dialog(
+                        DialogYN,
+                        'Create directory?',
+                        f'Path "{closest}" does not contain the subdirectory or subdirectories'
+                        + f' "{dest.relative_to(closest)}"'
+                        + '\nWould you like to create them now?',
+                        style_sheet=self.style_sheet
+                    )
+                    if ret == 0:
+                        continue
+                    dest.parent.mkdir(parents=True)
+                shutil.move(src, dest)
+                self.last_move[src] = dest
+            except Exception as e:
+                spawn_dialog(
+                    DialogOK,
+                    'Error',
+                    f'An error occurred; renaming will be aborted.\n{e.__class__.__name__}: {e}',
+                    style_sheet=self.style_sheet
+                )
+                break
+
+        spawn_dialog(DialogOK, 'Complete', f'Moved/renamed {len(self.last_move)} files.', style_sheet=self.style_sheet)
+        # To refresh the path listings
+        self._update_src_dir_preview()
+        self.ui.lineEditInputRegex.editingFinished.emit()
+        self.ui.lineEditOutputPattern.editingFinished.emit()
 
     def refresh_style(self):
         self.setStyleSheet(self.style_sheet)
 
 def parse_style_sheet(fp: str | Path) -> str:
+    """
+    Parses a stylesheet for Qt with CSS-style variables out into a string that Qt can understand;
+    i.e. with all variable references replaced with their defined values.
+    """
     style_raw: str = Path(fp).read_text('utf-8')
 
     if (m := re.search(r":root {(.*?)}", style_raw, flags=re.S)) is None:
@@ -310,9 +412,20 @@ def parse_style_sheet(fp: str | Path) -> str:
     return STYLE_VAR_ACCESS_RGX.sub(_get_var, style_sheet)
 
 def run_gui() -> int | None:
-    enable_logging(logger, 'INFO')
+    log_level: str = 'INFO'
+    if '-d' in sys.argv:
+        log_level = 'DEBUG'
+    if '-q' in sys.argv:
+        log_level = 'WARNING'
 
-    main_style: str = parse_style_sheet(STYLE_PATH)
+    enable_logging(logger, log_level)
+
+    logger.info(
+        'Logging started;'
+        + ' use -d to enable DEBUG-level logs, or use -q to only show logs at WARNING level or higher'
+    )
+
+    main_style: str = parse_style_sheet(STYLE_CSS_PATH)
 
     app = QApplication(sys.argv)
 

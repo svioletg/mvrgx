@@ -43,6 +43,7 @@ QListWidget::item:selected {
 }
 
 QPushButton {
+    padding: 2px 4px;
     background: var(--bttn-bg);
     color: var(--txt-color);
     border: var(--bttn-border);
@@ -62,11 +63,15 @@ QPushButton:disabled {
     color: var(--bttn-disabled-txt-color);
 }
 
-QLineEdit[inputValid="True"] {
+QPushButton[thickButton=true] {
+    padding: 8px;
+}
+
+QLineEdit[inputValid=true] {
     color: black;
 }
 
-QLineEdit[inputValid="False"] {
+QLineEdit[inputValid=false] {
     color: red;
 }
 
