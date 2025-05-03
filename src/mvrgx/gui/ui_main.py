@@ -145,6 +145,7 @@ class Ui_MainWindow(object):
         self.lineEditInputRegex.setStyleSheet(u"font-family: \"Cascadia Mono\", monospace;")
         self.lineEditInputRegex.setText(u"(.+)\\..+$")
         self.lineEditInputRegex.setPlaceholderText(u"")
+        self.lineEditInputRegex.setProperty(u"inputValid", True)
 
         self.gridLayoutInOut.addWidget(self.lineEditInputRegex, 1, 0, 1, 1)
 
@@ -154,6 +155,8 @@ class Ui_MainWindow(object):
         self.horizontalLayoutInputRegex.setContentsMargins(-1, -1, 0, -1)
         self.labelInputRegexWarning = QLabel(self.centralwidget)
         self.labelInputRegexWarning.setObjectName(u"labelInputRegexWarning")
+        sizePolicy1.setHeightForWidth(self.labelInputRegexWarning.sizePolicy().hasHeightForWidth())
+        self.labelInputRegexWarning.setSizePolicy(sizePolicy1)
         self.labelInputRegexWarning.setMaximumSize(QSize(16, 16))
         self.labelInputRegexWarning.setPixmap(QPixmap(u":/icon/img/warning.svg"))
         self.labelInputRegexWarning.setScaledContents(True)

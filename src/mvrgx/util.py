@@ -1,11 +1,37 @@
 import re
+from argparse import ArgumentParser
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import colorama
 from colorama import Back, Fore, Style
 
 colorama.init(autoreset=True)
+
+@dataclass
+class CliArg:
+    """
+    A "pre-packaged" command-line argument, mainly used for parity between the CLI and GUI argument sets.
+
+    :param name: A tuple of one or two strings; short or long alone, or both short and long names.
+    """
+    name: tuple[str] | tuple[str, str]
+    kwargs: dict[str, Any]
+
+    def add_to(self, parser: ArgumentParser, overrides: dict[str, Any] | None = None):
+        parser.add_argument(*self.name, **self.kwargs | (overrides or {}))
+
+CLARG_LOG_LEVEL: CliArg = CliArg(
+    ('-log', '--log-level'),
+    {
+        'type': lambda s: s.upper(),
+        'choices': ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRTIICAL'),
+        'default': 'INFO',
+        'help': 'Sets the log level.'
+    }
+)
 
 def highlight_regex(match: re.Match[str], color: str) -> str:
     if not color.startswith('\x1b'):

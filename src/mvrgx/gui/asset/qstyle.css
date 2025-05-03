@@ -1,3 +1,5 @@
+/* Not immediately usable by Qt on its own, gets parsed by gui.py first */
+
 :root {
     --main-bg: lightgrey;
     --inner-bg: white;

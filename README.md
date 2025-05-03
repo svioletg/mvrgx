@@ -2,7 +2,7 @@
 
 > **M**o**V**e with **R**e**G**e**X**
 
-A tool with a terrible name that aids in bulk-renaming via regex and specialized output patterns. Matches files based on an input regular expression and either prints the list out if no output pattern is provided, or renames all matched files according to the given output pattern. `mvrgx` uses Python's standard [`re`](https://docs.python.org/3.12/library/re.html) module for regex parsing.
+A tool that aids in bulk-renaming via regex and specialized output patterns. Matches files based on an input regular expression and either prints the list out if no output pattern is provided, or renames all matched files according to the given output pattern. `mvrgx` uses Python's standard [`re`](https://docs.python.org/3.12/library/re.html) module for regex parsing.
 
 ## Usage
 
@@ -12,7 +12,13 @@ Install `mvrgx` with pip:
 pip install git+https://github.com/svioletg/python-mvrgx
 ```
 
-This will install the `mvrgx` and `mvr` commands, which are identical. Basic usage could look something like this:
+This will install the `mvrgx` and `mvr` commands, which both do the same thing. The `mvrgui` command will also be installed, which launches a GUI version of `mvrgx`. To use the GUI, you must install the optional GUI dependencies by adding `[gui]` to the end of the installation link:
+
+```bash
+pip install git+https://github.com/svioletg/python-mvrgx[gui]
+```
+
+Basic CLI usage could look something like this:
 
 ```bash
 # Match all files starting with "2025-04-XX", and rename them to "April XX, 2025 - " followed by the rest of the filename.
@@ -30,6 +36,16 @@ mvrgx '*(\.mp3$)' -o '\m:a{trackno}-\m:a{title}.\m:f{suffix}'
 ```
 
 Regular expressions are expected for input patterns, while output patterns use a combination of plain text and special backslash-prefixed keys for inserting match groups (`\1`, `\2`, `\3`) or file metadata (`\m:f{suffix}`, `\m:a{trackno}`).
+
+## Usage: Arguments
+
+### Arguments supported by `mvrgx`, `mvr`
+
+<!-- argtable:cli -->
+
+### Arguments supported by `mvrgui`
+
+<!-- argtable:gui -->
 
 ## Usage: Capture groups
 

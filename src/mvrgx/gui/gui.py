@@ -1,6 +1,7 @@
 import re
 import shutil
 import sys
+from argparse import ArgumentParser
 from collections.abc import Generator
 from math import log10
 from pathlib import Path
@@ -18,7 +19,7 @@ from mvrgx.gui.ui_dialog_yesnoall import Ui_DialogYNAll
 from mvrgx.gui.ui_main import Ui_MainWindow
 from mvrgx.logging import enable_logging, logger
 from mvrgx.project import GUI_ASSET_ROOT, PROJECT_ROOT, VERSION
-from mvrgx.util import closest_existing_dir, glob_sep
+from mvrgx.util import CLARG_LOG_LEVEL, closest_existing_dir, glob_sep
 
 STYLE_CSS_PATH: Path = GUI_ASSET_ROOT / 'qstyle.css'
 
@@ -150,6 +151,7 @@ class MainWindow(QMainWindow):
     def last_move(self, value: dict[Path, Path] | None):
         self._last_move = value
         self.ui.pushButtonUndoMove.setEnabled(value is not None)
+        self.ui.pushButtonUndoMove.setToolTip('Nothing to undo.' if value is None else '')
 
     @property
     def src_dir(self) -> Path:
@@ -159,7 +161,7 @@ class MainWindow(QMainWindow):
     def input_regex(self) -> re.Pattern[str] | None:
         try:
             return re.compile(self.ui.lineEditInputRegex.text())
-        except re.error as e:
+        except re.error:
             return None
 
     @property
@@ -192,11 +194,12 @@ class MainWindow(QMainWindow):
         self.ui.labelInputRegexWarning.setVisible(msg != '')
         self.move_enabled_conditions['valid_input_regex'] = msg == ''
 
+        valid_before: bool = self.ui.lineEditInputRegex.property('inputValid')
         if msg == '':
             self.ui.lineEditInputRegex.setProperty('inputValid', True)
-            self.reload_style()
         else:
             self.ui.lineEditInputRegex.setProperty('inputValid', False)
+        if self.ui.lineEditInputRegex.property('inputValid') != valid_before:
             self.reload_style()
 
         self.toggle_move_button()
@@ -220,11 +223,12 @@ class MainWindow(QMainWindow):
         self.ui.labelOutputPatternWarning.setVisible(msg != '')
         self.move_enabled_conditions['valid_output_pattern'] = msg == ''
 
+        valid_before: bool = self.ui.lineEditOutputPattern.property('inputValid')
         if msg == '':
             self.ui.lineEditOutputPattern.setProperty('inputValid', True)
-            self.reload_style()
         else:
             self.ui.lineEditOutputPattern.setProperty('inputValid', False)
+        if self.ui.labelOutputPattern.property('inputValid') != valid_before:
             self.reload_style()
 
         self.toggle_move_button()
@@ -271,6 +275,7 @@ class MainWindow(QMainWindow):
         self.ui.lineEditSrcDir.editingFinished.emit()
 
     def _update_mv_preview(self):
+        self._validate_input_regex()
         self._validate_output_pattern()
         self.ui.listWidgetMvBefore.clear()
         self.ui.listWidgetMvAfter.clear()
@@ -485,24 +490,23 @@ def parse_style_sheet(fp: str | Path) -> str:
     style_out = STYLE_URL_RGX.sub(lambda m: f'url(\'{GUI_ASSET_ROOT / str(m.groups(0)[0])}\')', style_out)
     return style_out
 
+arg_parser = ArgumentParser()
+CLARG_LOG_LEVEL.add_to(arg_parser)
+
 def run_gui() -> int | None:
-    log_level: str = 'INFO'
-    if '-d' in sys.argv:
-        log_level = 'DEBUG'
-    if '-q' in sys.argv:
-        log_level = 'WARNING'
+    args, qtargs = arg_parser.parse_known_args()
+    log_level: str = args.log_level
 
     enable_logging(logger, log_level)
 
     logger.info(
-        'Logging started;'
+        f'Logging started at level {log_level};'
         + ' use -d to enable DEBUG-level logs, or use -q to only show logs at WARNING level or higher'
     )
 
     main_style: str = parse_style_sheet(STYLE_CSS_PATH)
 
-    app = QApplication(sys.argv)
-
+    app = QApplication(qtargs)
     window = MainWindow(main_style)
     window.show()
 

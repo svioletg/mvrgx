@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from mvrgx.core import parse_output_pattern
 from mvrgx.logging import enable_logging, logger
+from mvrgx.util import CLARG_LOG_LEVEL
 
 colorama.init(autoreset=True)
 
@@ -34,29 +35,28 @@ information like track title, number, album, and artist.
 """
     print('\n\n'.join('    ' + '\n'.join(textwrap.wrap(p)).strip() for p in help_text.split('\n\n')))
 
-def run_cli() -> int | None:
-    parser = ArgumentParser()
-    parser.add_argument('regex', type=re.compile,
-        help='Python-flavored regex pattern to match files against.' \
-        + ' In bash, it is advised to give this pattern in single-quotes to avoid unexpected behavior.')
-    parser.add_argument('-log', type=str, choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRTIICAL'), default='INFO',
-        help='Sets the logging level.')
-    parser.add_argument('-at', '--at-dir', type=Path, default=Path('.'),
-        help='Alternative path to run this search/replace in. Defaults to the current directory.')
-    parser.add_argument('-o', '--out', type=str,
-        help='Pattern to move/rename each file to.'
-        + ' Use "\\N" to insert a capture group, where N is the index of the group.'
-        + ' You can also access file metadata with the "\\m{...}" pattern. Use -o/--out :help for details.'
-        + ' Omitting this option will instead print out files captured with the find pattern given,'
-        + ' without making any changes.')
-    parser.add_argument('-r', '--recursive', action='store_true',
-        help='Searches this directory recursively. Default behavior is to only search the top level.')
-    parser.add_argument('-p', '--preview', action='store_true',
-        help='Displays the captured files and what their new names would be, and exits without modifying any files.')
+arg_parser = ArgumentParser()
+arg_parser.add_argument('regex', type=re.compile,
+    help='Python-flavored regex pattern to match files against.' \
+    + ' In bash, it is advised to give this pattern in single-quotes to avoid unexpected behavior.')
+CLARG_LOG_LEVEL.add_to(arg_parser)
+arg_parser.add_argument('-at', '--at-dir', type=Path, default=Path('.'),
+    help='Path to run this search/replace from. Defaults to the current directory.')
+arg_parser.add_argument('-o', '--out', type=str,
+    help='Pattern to move/rename each file to.'
+    + ' Use "\\N" to insert a capture group, where N is the index of the group.'
+    + ' You can also access file metadata with the "\\m{...}" pattern. Use -o/--out :help for details.'
+    + ' Omitting this option will instead print out files captured with the find pattern given,'
+    + ' without making any changes.')
+arg_parser.add_argument('-r', '--recursive', action='store_true',
+    help='Searches this directory recursively. Default behavior is to only search the top level.')
+arg_parser.add_argument('-p', '--preview', action='store_true',
+    help='Displays the captured files and what their new names would be, and exits without modifying any files.')
 
-    args = parser.parse_args()
+def run_cli() -> int | None:
+    args = arg_parser.parse_args()
     find_regex  : re.Pattern[str] = args.regex
-    log_level   : str             = args.log
+    log_level   : str             = args.log_level
     root        : Path            = args.at_dir
     out_pattern : None | str      = args.out
     recurs      : bool            = args.recursive

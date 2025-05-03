@@ -13,3 +13,4 @@ wheels/
 *.ipynb
 .ipynb_checkpoints/
 testdir/
+/_*
