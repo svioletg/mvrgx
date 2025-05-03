@@ -2,6 +2,7 @@ import re
 import shutil
 import sys
 from collections.abc import Generator
+from math import log10
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,7 @@ from mvrgx.core import NUM_GROUP_RGX, parse_output_pattern
 from mvrgx.gui.ui_dialog_ok import Ui_DialogOK
 from mvrgx.gui.ui_dialog_yesno import Ui_DialogYN
 from mvrgx.gui.ui_dialog_yesno_with_list import Ui_DialogYNList
+from mvrgx.gui.ui_dialog_yesnoall import Ui_DialogYNAll
 from mvrgx.gui.ui_main import Ui_MainWindow
 from mvrgx.logging import enable_logging, logger
 from mvrgx.project import PROJECT_ROOT, VERSION
@@ -24,10 +26,12 @@ STYLE_VAR_DEF_RGX: re.Pattern[str] = re.compile(r"(--.+?): (.+);")
 STYLE_VAR_ACCESS_RGX: re.Pattern[str] = re.compile(r"var\((.+)\)")
 
 def listWidget_iter(widget: QListWidget) -> Generator[QListWidgetItem, None, None]:
+    """Iterates over the `QListWidgetItem`s of a `QListWidget`."""
     for n in range(widget.count()):
         yield widget.item(n)
 
 class DialogOK(QDialog):
+    """Simple dialog box with a message and an "OK" button."""
     def __init__(self, style_sheet: str = ''):
         super().__init__()
         self.ui = Ui_DialogOK()
@@ -36,6 +40,7 @@ class DialogOK(QDialog):
         self.style_sheet = style_sheet
 
 class DialogYN(QDialog):
+    """Dialog box with a message and "Yes" / "No" choice buttons."""
     def __init__(self, style_sheet: str = ''):
         super().__init__()
         self.ui = Ui_DialogYN()
@@ -43,7 +48,20 @@ class DialogYN(QDialog):
         self.setStyleSheet(style_sheet)
         self.style_sheet = style_sheet
 
+class DialogYNAll(QDialog):
+    """Dialog box with a message, "Yes" / "No" choice buttons, and a single checkbox."""
+    def __init__(self, style_sheet: str = '', checkbox_text: str | None = None):
+        super().__init__()
+        self.ui = Ui_DialogYNAll()
+        self.ui.setupUi(self)
+        self.setStyleSheet(style_sheet)
+        self.style_sheet = style_sheet
+
+        if checkbox_text is not None:
+            self.ui.checkBoxForAll.setText(checkbox_text)
+
 class DialogYNList(QDialog):
+    """Dialog box with a message, a `QListWidget`, and "Yes" / "No" choice buttons."""
     def __init__(self, items: list[str] | None = None, style_sheet: str = ''):
         super().__init__()
         self.ui = Ui_DialogYNList()
@@ -175,10 +193,10 @@ class MainWindow(QMainWindow):
 
         if msg == '':
             self.ui.lineEditOutputPattern.setProperty('inputValid', True)
-            self.refresh_style()
+            self.reload_style()
         else:
             self.ui.lineEditOutputPattern.setProperty('inputValid', False)
-            self.refresh_style()
+            self.reload_style()
 
     def _ask_src_dir(self):
         dlg = QFileDialog(self, directory=str(self.src_dir if self.src_dir.is_dir() else '.'))
@@ -316,7 +334,7 @@ class MainWindow(QMainWindow):
         for a, b in zip(listWidget_iter(self.ui.listWidgetMvBefore), listWidget_iter(self.ui.listWidgetMvAfter)):
             move_map[Path(a.toolTip())] = Path(b.toolTip())
 
-        self.rename_files(move_map)
+        self.move_files(move_map)
 
     def _undo_rename_files_clicked(self):
         if self.last_move is None:
@@ -331,22 +349,26 @@ class MainWindow(QMainWindow):
         if ret == 0:
             return
 
-        self.rename_files({v:k for k, v in self.last_move.items()})
+        self.move_files({v:k for k, v in self.last_move.items()})
 
-    def rename_files(self, move_map: dict[Path, Path]):
+    def move_files(self, move_map: dict[Path, Path]):
+        """Move files based on the given mapping of `Path`s as `source : destination`."""
         progress = QProgressDialog('Renaming...', 'Cancel', 0, len(move_map), minimumDuration=0)
         progress.setStyleSheet(self.style_sheet)
         progress.setWindowModality(Qt.WindowModality.ApplicationModal)
 
         self.last_move = {}
-        for n, (src, dest) in enumerate(move_map.items()):
-            try:
-                logger.debug(f'({n}/{len(move_map)}) {src} -> {dest}')
-                progress.setLabelText(f'{src}  ->  {dest}')
-                progress.setValue(n + 1)
-                if progress.wasCanceled():
-                    break
 
+        always_create_missing: bool | None = None
+        for n, (src, dest) in enumerate(move_map.items()):
+            num_prog_str: str = f'({n + 1:>{int(log10(len(move_map))) + 1}}/{len(move_map)})'
+            logger.debug(f'{num_prog_str} {src} -> {dest}')
+            progress.setLabelText(f'{src}  ->  {dest}')
+            progress.setValue(n + 1)
+            if progress.wasCanceled():
+                break
+
+            try:
                 if not dest.parent.is_dir():
                     if (closest := closest_existing_dir(dest)) is None:
                         spawn_dialog(
@@ -356,17 +378,28 @@ class MainWindow(QMainWindow):
                             + '\nThis is likely a bug; renaming will be aborted.'
                         )
                         break
-                    _, ret = spawn_dialog(
-                        DialogYN,
-                        'Create directory?',
-                        f'Path "{closest}" does not contain the subdirectory or subdirectories'
-                        + f' "{dest.relative_to(closest)}"'
-                        + '\nWould you like to create them now?',
-                        style_sheet=self.style_sheet
-                    )
-                    if ret == 0:
+                    ret: int = 0
+                    if always_create_missing is None:
+                        dlg, ret = spawn_dialog(
+                            DialogYNAll,
+                            'Create directory?',
+                            f'Path "{closest}" does not contain the subdirectory or subdirectories'
+                            + f' "{dest.relative_to(closest)}"'
+                            + '\nWould you like to create them now?',
+                            style_sheet=self.style_sheet
+                        )
+                        if dlg.ui.checkBoxForAll.isChecked():
+                            always_create_missing = bool(ret)
+                        if ret == 0:
+                            logger.debug(f'{num_prog_str} Directory creation rejected; not moving')
+                            continue
+                    # The only way we reach this point is if we said yes to the prompt,
+                    # or if always_create_missing has a value
+                    if (always_create_missing is True) or (ret == 1):
+                        dest.parent.mkdir(parents=True)
+                    else:
+                        logger.debug(f'{num_prog_str} Directory creation rejected; not moving')
                         continue
-                    dest.parent.mkdir(parents=True)
                 shutil.move(src, dest)
                 self.last_move[src] = dest
             except Exception as e:
@@ -384,7 +417,8 @@ class MainWindow(QMainWindow):
         self.ui.lineEditInputRegex.editingFinished.emit()
         self.ui.lineEditOutputPattern.editingFinished.emit()
 
-    def refresh_style(self):
+    def reload_style(self):
+        """Reload the style sheet."""
         self.setStyleSheet(self.style_sheet)
 
 def parse_style_sheet(fp: str | Path) -> str:
