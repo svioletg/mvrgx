@@ -132,16 +132,6 @@
       <item row="0" column="1">
        <layout class="QHBoxLayout" name="horizontalLayoutOutputPattern">
         <item>
-         <widget class="QLabel" name="labelOutputPattern">
-          <property name="text">
-           <string>Output pattern</string>
-          </property>
-          <property name="buddy">
-           <cstring>lineEditOutputPattern</cstring>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="labelOutputPatternWarning">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -163,6 +153,16 @@
           </property>
           <property name="scaledContents">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelOutputPattern">
+          <property name="text">
+           <string>Output pattern</string>
+          </property>
+          <property name="buddy">
+           <cstring>lineEditOutputPattern</cstring>
           </property>
          </widget>
         </item>
@@ -222,6 +222,25 @@
         <property name="rightMargin">
          <number>0</number>
         </property>
+        <item>
+         <widget class="QLabel" name="labelInputRegexWarning">
+          <property name="maximumSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap resource="icons.qrc">:/icon/img/warning.svg</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QLabel" name="labelInputRegex">
           <property name="text">
@@ -309,7 +328,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QPushButton" name="pushButtonRenameFiles">
+       <widget class="QPushButton" name="pushButtonMoveFiles">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -329,7 +348,7 @@
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>Rename files</string>
+         <string>Rename/move files</string>
         </property>
         <property name="thickButton" stdset="0">
          <bool>true</bool>
@@ -337,7 +356,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButtonUndoRename">
+       <widget class="QPushButton" name="pushButtonUndoMove">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -382,8 +401,8 @@
   <tabstop>listWidgetMvBefore</tabstop>
   <tabstop>lineEditOutputPattern</tabstop>
   <tabstop>listWidgetMvAfter</tabstop>
-  <tabstop>pushButtonRenameFiles</tabstop>
-  <tabstop>pushButtonUndoRename</tabstop>
+  <tabstop>pushButtonMoveFiles</tabstop>
+  <tabstop>pushButtonUndoMove</tabstop>
  </tabstops>
  <resources>
   <include location="icons.qrc"/>

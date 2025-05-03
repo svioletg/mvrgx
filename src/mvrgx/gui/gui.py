@@ -4,7 +4,7 @@ import sys
 from collections.abc import Generator
 from math import log10
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QListWidget, QListWidgetItem, QMainWindow,
@@ -91,16 +91,9 @@ def spawn_dialog[T: Any](
     ret = inst.exec() if modal else inst.open()
     return inst, ret
 
-# def populate_list(widget: QListWidget, items: list[str], append: bool = True):
-#     """
-#     Fills a given list widget with items, each containing a string from the given list.
-
-#     :param append: If `True`, add items onto the existing list. `False` will clear the list of its items beforehand.
-#     """
-#     for s in items:
-#         i = QListWidgetItem()
-#         i.setText(s)
-#         widget.addItem
+class MoveEnabledConditions(TypedDict):
+    valid_input_regex: bool
+    valid_output_pattern: bool
 
 class PathSearchFilter:
     ALL = 0
@@ -117,6 +110,12 @@ class MainWindow(QMainWindow):
         self.style_sheet = style_sheet
         self.setWindowTitle(f'mvrgx v{VERSION}')
 
+        self.move_enabled_conditions: MoveEnabledConditions = {
+            'valid_input_regex': True,
+            'valid_output_pattern': True
+        }
+        self._last_move: dict[Path, Path] | None = None
+
         # Signals
         logger.info('Connecting signals...')
         self.ui.pushButtonSrcBrowse.clicked.connect(self._ask_src_dir)
@@ -130,6 +129,7 @@ class MainWindow(QMainWindow):
 
         self.ui.listWidgetSrcContents.itemDoubleClicked.connect(self._append_to_src_dir)
 
+        self.ui.lineEditInputRegex.textChanged.connect(self._validate_input_regex)
         self.ui.lineEditInputRegex.editingFinished.connect(self._update_mv_preview)
         self.ui.lineEditInputRegex.editingFinished.emit()
 
@@ -137,10 +137,8 @@ class MainWindow(QMainWindow):
         self.ui.lineEditOutputPattern.editingFinished.connect(self._update_mv_preview)
         self.ui.lineEditOutputPattern.editingFinished.emit()
 
-        self.ui.pushButtonRenameFiles.clicked.connect(self._rename_files_clicked)
-        self.ui.pushButtonUndoRename.clicked.connect(self._undo_rename_files_clicked)
-
-        self._last_move: dict[Path, Path] | None = None
+        self.ui.pushButtonMoveFiles.clicked.connect(self._move_files_clicked)
+        self.ui.pushButtonUndoMove.clicked.connect(self._undo_move_files_clicked)
 
         logger.info('UI init complete')
 
@@ -151,15 +149,18 @@ class MainWindow(QMainWindow):
     @last_move.setter
     def last_move(self, value: dict[Path, Path] | None):
         self._last_move = value
-        self.ui.pushButtonUndoRename.setEnabled(value is not None)
+        self.ui.pushButtonUndoMove.setEnabled(value is not None)
 
     @property
     def src_dir(self) -> Path:
         return Path(self.ui.lineEditSrcDir.text()).resolve()
 
     @property
-    def input_regex(self) -> re.Pattern[str]:
-        return re.compile(self.ui.lineEditInputRegex.text())
+    def input_regex(self) -> re.Pattern[str] | None:
+        try:
+            return re.compile(self.ui.lineEditInputRegex.text())
+        except re.error as e:
+            return None
 
     @property
     def output_pattern(self) -> str:
@@ -173,14 +174,41 @@ class MainWindow(QMainWindow):
     def input_filter(self) -> int:
         return self.ui.comboBoxInputFilter.currentIndex()
 
+    @property
+    def moving_enabled(self) -> bool:
+        return all(self.move_enabled_conditions.values())
+
     def _validate_src_dir(self):
         self.ui.labelSrcDirErrMsg.setVisible(not Path(self.ui.lineEditSrcDir.text()).is_dir())
+
+    def _validate_input_regex(self):
+        msg: str = ''
+        try:
+            re.compile(self.ui.lineEditInputRegex.text())
+        except re.error as e:
+            msg = f'Invalid regex: {e}'
+
+        self.ui.labelInputRegexWarning.setToolTip(msg)
+        self.ui.labelInputRegexWarning.setVisible(msg != '')
+        self.move_enabled_conditions['valid_input_regex'] = msg == ''
+
+        if msg == '':
+            self.ui.lineEditInputRegex.setProperty('inputValid', True)
+            self.reload_style()
+        else:
+            self.ui.lineEditInputRegex.setProperty('inputValid', False)
+            self.reload_style()
+
+        self.toggle_move_button()
 
     def _validate_output_pattern(self):
         msg: str = ''
         num_groups: list[int] = [*map(lambda i: int(i.strip('\\')), NUM_GROUP_RGX.findall(self.output_pattern))]
         if not self.output_pattern:
             msg = 'Cannot be empty'
+
+        if self.input_regex is None:
+            msg = 'Input regex is invalid'
         elif len(num_groups) == 0:
             msg = 'Must contain at least one replacement group'
         elif any(n < 1 for n in num_groups):
@@ -190,7 +218,7 @@ class MainWindow(QMainWindow):
                   + f' ({self.input_regex.groups})'
         self.ui.labelOutputPatternWarning.setToolTip(msg)
         self.ui.labelOutputPatternWarning.setVisible(msg != '')
-        self.ui.pushButtonRenameFiles.setEnabled(msg == '')
+        self.move_enabled_conditions['valid_output_pattern'] = msg == ''
 
         if msg == '':
             self.ui.lineEditOutputPattern.setProperty('inputValid', True)
@@ -198,6 +226,8 @@ class MainWindow(QMainWindow):
         else:
             self.ui.lineEditOutputPattern.setProperty('inputValid', False)
             self.reload_style()
+
+        self.toggle_move_button()
 
     def _ask_src_dir(self):
         dlg = QFileDialog(self, directory=str(self.src_dir if self.src_dir.is_dir() else '.'))
@@ -246,6 +276,8 @@ class MainWindow(QMainWindow):
         self.ui.listWidgetMvAfter.clear()
 
         if not self.src_dir.is_dir():
+            return
+        if self.input_regex is None:
             return
 
         try:
@@ -319,12 +351,12 @@ class MainWindow(QMainWindow):
 
         return True
 
-    def _rename_files_clicked(self):
+    def _move_files_clicked(self):
         if not self._validate_output_paths():
             return
         _, ret = spawn_dialog(
             DialogYN,
-            'Confirm renaming',
+            'Confirm',
             f'About to rename/move {self.ui.listWidgetMvBefore.count()} files.\nContinue?',
             style_sheet=self.style_sheet
         )
@@ -337,7 +369,7 @@ class MainWindow(QMainWindow):
 
         self.move_files(move_map)
 
-    def _undo_rename_files_clicked(self):
+    def _undo_move_files_clicked(self):
         if self.last_move is None:
             spawn_dialog(DialogOK, 'mvrgx', 'Nothing to undo.')
             return
@@ -352,9 +384,17 @@ class MainWindow(QMainWindow):
 
         self.move_files({v:k for k, v in self.last_move.items()})
 
+    def reload_style(self):
+        """Reload the style sheet."""
+        self.setStyleSheet(self.style_sheet)
+
+    def toggle_move_button(self):
+        """Enables or disables the "Rename/move files" button based on the stored conditions."""
+        self.ui.pushButtonMoveFiles.setEnabled(self.moving_enabled)
+
     def move_files(self, move_map: dict[Path, Path]):
         """Move files based on the given mapping of `Path`s as `source : destination`."""
-        progress = QProgressDialog('Renaming...', 'Cancel', 0, len(move_map), minimumDuration=0)
+        progress = QProgressDialog('Moving files...', 'Cancel', 0, len(move_map), minimumDuration=0)
         progress.setStyleSheet(self.style_sheet)
         progress.setWindowModality(Qt.WindowModality.ApplicationModal)
 
@@ -376,7 +416,7 @@ class MainWindow(QMainWindow):
                             DialogOK,
                             'Error',
                             f'No existing directory could be found along the path: {dest}'
-                            + '\nThis is likely a bug; renaming will be aborted.'
+                            + '\nThis is likely a bug; this and remaining operations will be aborted.'
                         )
                         break
                     ret: int = 0
@@ -407,7 +447,7 @@ class MainWindow(QMainWindow):
                 spawn_dialog(
                     DialogOK,
                     'Error',
-                    f'An error occurred; renaming will be aborted.\n{e.__class__.__name__}: {e}',
+                    f'An error occurred; this and remaining operations will be aborted.\n{e.__class__.__name__}: {e}',
                     style_sheet=self.style_sheet
                 )
                 break
@@ -417,10 +457,6 @@ class MainWindow(QMainWindow):
         self._update_src_dir_preview()
         self.ui.lineEditInputRegex.editingFinished.emit()
         self.ui.lineEditOutputPattern.editingFinished.emit()
-
-    def reload_style(self):
-        """Reload the style sheet."""
-        self.setStyleSheet(self.style_sheet)
 
 def parse_style_sheet(fp: str | Path) -> str:
     """

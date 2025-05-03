@@ -104,11 +104,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayoutOutputPattern = QHBoxLayout()
         self.horizontalLayoutOutputPattern.setObjectName(u"horizontalLayoutOutputPattern")
-        self.labelOutputPattern = QLabel(self.centralwidget)
-        self.labelOutputPattern.setObjectName(u"labelOutputPattern")
-
-        self.horizontalLayoutOutputPattern.addWidget(self.labelOutputPattern)
-
         self.labelOutputPatternWarning = QLabel(self.centralwidget)
         self.labelOutputPatternWarning.setObjectName(u"labelOutputPatternWarning")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
@@ -121,6 +116,11 @@ class Ui_MainWindow(object):
         self.labelOutputPatternWarning.setScaledContents(True)
 
         self.horizontalLayoutOutputPattern.addWidget(self.labelOutputPatternWarning)
+
+        self.labelOutputPattern = QLabel(self.centralwidget)
+        self.labelOutputPattern.setObjectName(u"labelOutputPattern")
+
+        self.horizontalLayoutOutputPattern.addWidget(self.labelOutputPattern)
 
         self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
@@ -152,6 +152,14 @@ class Ui_MainWindow(object):
         self.horizontalLayoutInputRegex.setObjectName(u"horizontalLayoutInputRegex")
         self.horizontalLayoutInputRegex.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
         self.horizontalLayoutInputRegex.setContentsMargins(-1, -1, 0, -1)
+        self.labelInputRegexWarning = QLabel(self.centralwidget)
+        self.labelInputRegexWarning.setObjectName(u"labelInputRegexWarning")
+        self.labelInputRegexWarning.setMaximumSize(QSize(16, 16))
+        self.labelInputRegexWarning.setPixmap(QPixmap(u":/icon/img/warning.svg"))
+        self.labelInputRegexWarning.setScaledContents(True)
+
+        self.horizontalLayoutInputRegex.addWidget(self.labelInputRegexWarning)
+
         self.labelInputRegex = QLabel(self.centralwidget)
         self.labelInputRegex.setObjectName(u"labelInputRegex")
         self.labelInputRegex.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
@@ -196,35 +204,35 @@ class Ui_MainWindow(object):
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(-1, -1, -1, 0)
-        self.pushButtonRenameFiles = QPushButton(self.centralwidget)
-        self.pushButtonRenameFiles.setObjectName(u"pushButtonRenameFiles")
-        self.pushButtonRenameFiles.setEnabled(False)
+        self.pushButtonMoveFiles = QPushButton(self.centralwidget)
+        self.pushButtonMoveFiles.setObjectName(u"pushButtonMoveFiles")
+        self.pushButtonMoveFiles.setEnabled(False)
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         sizePolicy2.setHorizontalStretch(3)
         sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.pushButtonRenameFiles.sizePolicy().hasHeightForWidth())
-        self.pushButtonRenameFiles.setSizePolicy(sizePolicy2)
-        self.pushButtonRenameFiles.setMinimumSize(QSize(0, 0))
-        self.pushButtonRenameFiles.setStyleSheet(u"")
-        self.pushButtonRenameFiles.setProperty(u"thickButton", True)
+        sizePolicy2.setHeightForWidth(self.pushButtonMoveFiles.sizePolicy().hasHeightForWidth())
+        self.pushButtonMoveFiles.setSizePolicy(sizePolicy2)
+        self.pushButtonMoveFiles.setMinimumSize(QSize(0, 0))
+        self.pushButtonMoveFiles.setStyleSheet(u"")
+        self.pushButtonMoveFiles.setProperty(u"thickButton", True)
 
-        self.horizontalLayout.addWidget(self.pushButtonRenameFiles)
+        self.horizontalLayout.addWidget(self.pushButtonMoveFiles)
 
-        self.pushButtonUndoRename = QPushButton(self.centralwidget)
-        self.pushButtonUndoRename.setObjectName(u"pushButtonUndoRename")
-        self.pushButtonUndoRename.setEnabled(False)
+        self.pushButtonUndoMove = QPushButton(self.centralwidget)
+        self.pushButtonUndoMove.setObjectName(u"pushButtonUndoMove")
+        self.pushButtonUndoMove.setEnabled(False)
         sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
         sizePolicy3.setHorizontalStretch(1)
         sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.pushButtonUndoRename.sizePolicy().hasHeightForWidth())
-        self.pushButtonUndoRename.setSizePolicy(sizePolicy3)
+        sizePolicy3.setHeightForWidth(self.pushButtonUndoMove.sizePolicy().hasHeightForWidth())
+        self.pushButtonUndoMove.setSizePolicy(sizePolicy3)
         icon = QIcon(QIcon.fromTheme(QIcon.ThemeIcon.EditUndo))
-        self.pushButtonUndoRename.setIcon(icon)
-        self.pushButtonUndoRename.setCheckable(False)
-        self.pushButtonUndoRename.setFlat(False)
-        self.pushButtonUndoRename.setProperty(u"thickButton", True)
+        self.pushButtonUndoMove.setIcon(icon)
+        self.pushButtonUndoMove.setCheckable(False)
+        self.pushButtonUndoMove.setFlat(False)
+        self.pushButtonUndoMove.setProperty(u"thickButton", True)
 
-        self.horizontalLayout.addWidget(self.pushButtonUndoRename)
+        self.horizontalLayout.addWidget(self.pushButtonUndoMove)
 
 
         self.verticalLayout_4.addLayout(self.horizontalLayout)
@@ -243,12 +251,12 @@ class Ui_MainWindow(object):
         QWidget.setTabOrder(self.lineEditInputRegex, self.listWidgetMvBefore)
         QWidget.setTabOrder(self.listWidgetMvBefore, self.lineEditOutputPattern)
         QWidget.setTabOrder(self.lineEditOutputPattern, self.listWidgetMvAfter)
-        QWidget.setTabOrder(self.listWidgetMvAfter, self.pushButtonRenameFiles)
-        QWidget.setTabOrder(self.pushButtonRenameFiles, self.pushButtonUndoRename)
+        QWidget.setTabOrder(self.listWidgetMvAfter, self.pushButtonMoveFiles)
+        QWidget.setTabOrder(self.pushButtonMoveFiles, self.pushButtonUndoMove)
 
         self.retranslateUi(MainWindow)
 
-        self.pushButtonUndoRename.setDefault(False)
+        self.pushButtonUndoMove.setDefault(False)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -263,13 +271,14 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.listWidgetMvAfter.setToolTip(QCoreApplication.translate("MainWindow", u"Hover over an item to see its full path", None))
 #endif // QT_CONFIG(tooltip)
-        self.labelOutputPattern.setText(QCoreApplication.translate("MainWindow", u"Output pattern", None))
         self.labelOutputPatternWarning.setText("")
+        self.labelOutputPattern.setText(QCoreApplication.translate("MainWindow", u"Output pattern", None))
 #if QT_CONFIG(tooltip)
         self.listWidgetMvBefore.setToolTip(QCoreApplication.translate("MainWindow", u"Hover over a filename to see its full path", None))
 #endif // QT_CONFIG(tooltip)
         self.lineEditOutputPattern.setText(QCoreApplication.translate("MainWindow", u"\\1", None))
         self.lineEditOutputPattern.setPlaceholderText("")
+        self.labelInputRegexWarning.setText("")
         self.labelInputRegex.setText(QCoreApplication.translate("MainWindow", u"Input regex", None))
         self.checkBoxRecursive.setText(QCoreApplication.translate("MainWindow", u"Recursive", None))
         self.comboBoxInputFilter.setItemText(0, QCoreApplication.translate("MainWindow", u"All", None))
@@ -279,7 +288,7 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(tooltip)
         self.comboBoxInputFilter.setToolTip(QCoreApplication.translate("MainWindow", u"Choose how to filter matched results.", None))
 #endif // QT_CONFIG(tooltip)
-        self.pushButtonRenameFiles.setText(QCoreApplication.translate("MainWindow", u"Rename files", None))
-        self.pushButtonUndoRename.setText(QCoreApplication.translate("MainWindow", u"Undo", None))
+        self.pushButtonMoveFiles.setText(QCoreApplication.translate("MainWindow", u"Rename/move files", None))
+        self.pushButtonUndoMove.setText(QCoreApplication.translate("MainWindow", u"Undo", None))
     # retranslateUi
 
