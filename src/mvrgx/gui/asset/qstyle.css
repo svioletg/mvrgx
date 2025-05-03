@@ -32,7 +32,7 @@ QCheckBox::indicator {
 }
 
 QCheckBox::indicator:checked {
-    image: url('src/mvrgx/gui/asset/img/checkmark.svg');
+    image: url('img/checkmark.svg');
     vertical-align: middle;
 }
 

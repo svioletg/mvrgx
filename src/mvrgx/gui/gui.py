@@ -17,13 +17,14 @@ from mvrgx.gui.ui_dialog_yesno_with_list import Ui_DialogYNList
 from mvrgx.gui.ui_dialog_yesnoall import Ui_DialogYNAll
 from mvrgx.gui.ui_main import Ui_MainWindow
 from mvrgx.logging import enable_logging, logger
-from mvrgx.project import PROJECT_ROOT, VERSION
+from mvrgx.project import GUI_ASSET_ROOT, PROJECT_ROOT, VERSION
 from mvrgx.util import closest_existing_dir, glob_sep
 
-STYLE_CSS_PATH: Path = PROJECT_ROOT / 'gui/asset/qstyle.css'
+STYLE_CSS_PATH: Path = GUI_ASSET_ROOT / 'qstyle.css'
 
 STYLE_VAR_DEF_RGX: re.Pattern[str] = re.compile(r"(--.+?): (.+);")
 STYLE_VAR_ACCESS_RGX: re.Pattern[str] = re.compile(r"var\((.+)\)")
+STYLE_URL_RGX: re.Pattern[str] = re.compile(r"url\('(.*)'\)")
 
 def listWidget_iter(widget: QListWidget) -> Generator[QListWidgetItem, None, None]:
     """Iterates over the `QListWidgetItem`s of a `QListWidget`."""
@@ -443,7 +444,10 @@ def parse_style_sheet(fp: str | Path) -> str:
             logger.error(f'CSS var "{key}" is not defined in {Path(fp).relative_to(PROJECT_ROOT)}')
             return ''
         return style_vars[key]
-    return STYLE_VAR_ACCESS_RGX.sub(_get_var, style_sheet)
+
+    style_out: str = STYLE_VAR_ACCESS_RGX.sub(_get_var, style_sheet)
+    style_out = STYLE_URL_RGX.sub(lambda m: f'url(\'{GUI_ASSET_ROOT / str(m.groups(0)[0])}\')', style_out)
+    return style_out
 
 def run_gui() -> int | None:
     log_level: str = 'INFO'
