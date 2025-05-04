@@ -9,13 +9,13 @@ A tool that aids in bulk-renaming via regex and specialized output patterns. Mat
 Install `mvrgx` with pip:
 
 ```bash
-pip install git+https://github.com/svioletg/python-mvrgx
+pip install git+https://github.com/svioletg/mvrgx
 ```
 
 This will install the `mvrgx` and `mvr` commands, which both do the same thing. The `mvrgui` command will also be installed, which launches a GUI version of `mvrgx`. To use the GUI, you must install the optional GUI dependencies by adding `[gui]` to the end of the installation link:
 
 ```bash
-pip install git+https://github.com/svioletg/python-mvrgx[gui]
+pip install git+https://github.com/svioletg/mvrgx[gui]
 ```
 
 Basic CLI usage could look something like this:
