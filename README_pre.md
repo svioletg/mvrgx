@@ -41,22 +41,11 @@ Regular expressions are expected for input patterns, while output patterns use a
 
 ### Arguments supported by `mvrgx`, `mvr`
 
-|Name|Description|
-|-|-|
-|`-h`, `--help`|show this help message and exit|
-|`regex`|Python-flavored regex pattern to match files against. In bash, it is advised to give this pattern in single-quotes to avoid unexpected behavior.|
-|`-log`, `--log-level`|Sets the log level.|
-|`-at`, `--at-dir`|Path to run this search/replace from. Defaults to the current directory.|
-|`-o`, `--out`|Pattern to move/rename each file to. Use "\N" to insert a capture group, where N is the index of the group. You can also access file metadata with the "\m{...}" pattern. Use -o/--out :help for details. Omitting this option will instead print out files captured with the find pattern given, without making any changes.|
-|`-r`, `--recursive`|Searches this directory recursively. Default behavior is to only search the top level.|
-|`-p`, `--preview`|Displays the captured files and what their new names would be, and exits without modifying any files.|
+<!-- argtable:cli -->
 
 ### Arguments supported by `mvrgui`
 
-|Name|Description|
-|-|-|
-|`-h`, `--help`|show this help message and exit|
-|`-log`, `--log-level`|Sets the log level.|
+<!-- argtable:gui -->
 
 ## Usage: Capture groups
 
